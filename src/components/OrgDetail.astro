@@ -59,12 +59,29 @@ const basicProperties = Object.entries(record.properties).filter(([key, value]) 
 const tagIds: string[] = Array.isArray(record.properties['Tags']) ? record.properties['Tags'] : [];
 const activityIds: string[] = Array.isArray(record.properties['Activities']) ? record.properties['Activities'] : [];
 const sourceIds: string[] = Array.isArray(record.properties['Sources']) ? record.properties['Sources'] : [];
-const affiliationIds: string[] = Array.isArray(record.properties['Network Affiliation']) ? record.properties['Network Affiliation'] : [];
 
 const tags = tagIds.map((id) => lookups.tags?.get(id)).filter(Boolean) as NormalizedRecord[];
 const activities = activityIds.map((id) => lookups.activities?.get(id)).filter(Boolean) as NormalizedRecord[];
 const sources = sourceIds.map((id) => lookups.sources?.get(id)).filter(Boolean) as NormalizedRecord[];
-const affiliations = affiliationIds.map((id) => lookups.affiliations?.get(id)).filter(Boolean) as NormalizedRecord[];
+
+// Network Affiliation: support both relation IDs and rollup names
+const rawAffiliations = record.properties['Network Affiliation'];
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const affiliationOrgs: NormalizedRecord[] = [];
+const affiliationNames: string[] = [];
+if (Array.isArray(rawAffiliations)) {
+  for (const val of rawAffiliations) {
+    if (typeof val === 'string' && uuidPattern.test(val)) {
+      const found = lookups.affiliations?.get(val);
+      if (found) affiliationOrgs.push(found);
+    } else if (typeof val === 'string' && val.trim()) {
+      affiliationNames.push(val.trim());
+    } else if (val && typeof val === 'object') {
+      const name = val.name ?? val.title ?? val.Name ?? '';
+      if (name) affiliationNames.push(String(name).trim());
+    }
+  }
+}
 
 const background = String(record.properties['background_section'] ?? record.properties['Background_section'] ?? '');
 const vision = String(record.properties['vision_legacy_section'] ?? record.properties['Vision_legacy_section'] ?? '');
@@ -133,15 +150,21 @@ const subHeadingSize = isPanel ? '1rem' : '1.1rem';
     ))}
   </dl>
 
-  {affiliations.length > 0 && (
+  {(affiliationOrgs.length > 0 || affiliationNames.length > 0) && (
     <div style="margin-bottom:1.5rem;">
       <h3 style="font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin:0 0 0.75rem 0;">Network Affiliation</h3>
       <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-        {affiliations.map((org) => (
+        {affiliationOrgs.map((org) => (
           <a href={`${base}/organizations/${slugFor(org.id)}`} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);text-decoration:none;font-size:0.85rem;">
             <span>{org.icon || '🌱'}</span>
             <span style="word-break:break-word;overflow-wrap:anywhere;">{getTitle(org)}</span>
           </a>
+        ))}
+        {affiliationNames.map((name) => (
+          <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);font-size:0.85rem;">
+            <span>🌐</span>
+            <span style="word-break:break-word;overflow-wrap:anywhere;">{name}</span>
+          </span>
         ))}
       </div>
     </div>
@@ -161,7 +184,11 @@ const subHeadingSize = isPanel ? '1rem' : '1.1rem';
     </div>
   )}
 
-  <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0;" />
+  <div style="display:flex;align-items:center;gap:0.75rem;margin:2rem 0;">
+    <hr style="flex:1;border:none;border-top:1px solid var(--border);" />
+    <span style="font-size:0.65rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);white-space:nowrap;">Content</span>
+    <hr style="flex:1;border:none;border-top:1px solid var(--border);" />
+  </div>
 
   {background && (
     <div style="margin-bottom:1.5rem;" set:html={renderMarkdown(background)} />

@@ -122,13 +122,36 @@ const hasLookups = Object.keys(lookups).length > 0;
   </div>
 </div>
 
+<style is:global>
+  .maplibregl-popup {
+    z-index: 30 !important;
+  }
+  .map-pin-popup .maplibregl-popup-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 16px rgba(42,24,16,0.12);
+    padding: 0;
+    overflow: hidden;
+  }
+  .map-pin-popup .maplibregl-popup-tip {
+    border-top-color: var(--card);
+    border-bottom-color: var(--card);
+  }
+</style>
+
 {hasLookups && (
   <div style="display:none;">
-    {records.map((r) => (
-      <div id={`home-detail-${r.id}`} class="home-detail-template">
-        <OrgDetail record={r} lookups={lookups} mode="panel" fullPageHref={r.href} />
-      </div>
-    ))}
+    {records.map((r) => {
+      const slug = r.id.replace(/-/g, '');
+      const pathPrefix = r.sectionRoute ? r.sectionRoute.replace(/\/$/, '') : basePath.replace(/\/$/, '');
+      const fullPageHref = `${base}${pathPrefix}/${slug}`;
+      return (
+        <div id={`home-detail-${r.id}`} class="home-detail-template">
+          <OrgDetail record={r} lookups={lookups} mode="panel" fullPageHref={fullPageHref} />
+        </div>
+      );
+    })}
   </div>
 )}
 
@@ -244,11 +267,12 @@ const hasLookups = Object.keys(lookups).length > 0;
           closeButton: false,
           closeOnClick: false,
           className: 'map-pin-popup',
+          anchor: 'bottom',
         }).setHTML(`
-          <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
-            <div style="font-weight:600;font-size:0.85rem;color:var(--fg);margin-bottom:0.25rem;">${m.name}</div>
-            ${m.category ? `<div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.25rem;">${m.category}</div>` : ''}
-            ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;">${m.place}</div>` : ''}
+          <div style="padding:0.5rem 0.65rem;font-family:var(--sans);max-width:240px;">
+            <div style="font-weight:600;font-size:0.9rem;color:var(--fg);margin-bottom:0.3rem;line-height:1.3;">${m.name}</div>
+            ${m.category ? `<div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.3rem;">${m.category}</div>` : ''}
+            ${m.place ? `<div style="font-size:0.8rem;color:var(--fg);line-height:1.4;">${m.place}</div>` : ''}
           </div>
         `);
         marker.setPopup(popup);
