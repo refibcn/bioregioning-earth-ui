@@ -145,7 +145,7 @@ const hasLookups = Object.keys(lookups).length > 0;
     <div id="org-detail-templates" style="display:none;">
       {rows.map((r) => (
         <div id={`org-detail-${r.id}`} class="org-detail-template">
-          <OrgDetail record={r.record} lookups={lookups} mode="panel" />
+          <OrgDetail record={r.record} lookups={lookups} mode="panel" fullPageHref={r.href} />
         </div>
       ))}
     </div>

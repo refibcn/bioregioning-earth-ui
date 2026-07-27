@@ -1,0 +1,21 @@
+import{m as s}from"./maplibre-gl.BTSAnE5y.js";function k(i){const n=Object.entries(i).filter(([t,r])=>!(r==null||r===""||Array.isArray(r)&&r.length===0));if(n.length===0)return"";function c(t){if(t==null)return"";if(Array.isArray(t))return t.join(", ");if(typeof t=="object"){if("address"in t&&t.address)return String(t.address);if("name"in t&&t.name)return String(t.name);if("latitude"in t&&"longitude"in t)return`${t.latitude}, ${t.longitude}`;try{return JSON.stringify(t)}catch{return"[Object]"}}return String(t)}return`<dl style="display:grid;grid-template-columns:1fr;gap:0.85rem;margin:0;">
+      ${n.map(([t,r])=>{const d=c(r);return`<div style="display:grid;grid-template-columns:120px 1fr;gap:0.6rem;align-items:start;">
+          <dt style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding-top:0.15rem;font-family:var(--mono);">${t}</dt>
+          <dd style="margin:0;font-size:0.85rem;color:var(--fg);word-break:break-word;line-height:1.45;">${d}</dd>
+        </div>`}).join("")}
+    </dl>`}function u(){const i=document.getElementById("earth-map");if(!i)return;const n=JSON.parse(i.dataset.markers||"[]");if(n.length===0){i.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.9rem;font-family:var(--mono);">No geolocated records to display.</div>';return}const c=n.reduce((e,o)=>e+o.lat,0)/n.length,t=n.reduce((e,o)=>e+o.lng,0)/n.length,r=new s.Map({container:i,style:{version:8,sources:{osm:{type:"raster",tiles:["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],tileSize:256,attribution:"&copy; OpenStreetMap contributors"}},layers:[{id:"osm",type:"raster",source:"osm"}]},center:[t||0,c||20],zoom:n.length===1?4:2});r.addControl(new s.NavigationControl,"bottom-right"),r.addControl(new s.FullscreenControl,"bottom-left");const d=new s.LngLatBounds,l=document.getElementById("map-panel"),g=document.getElementById("map-panel-content"),y=document.getElementById("map-panel-close");function h(e){return String(e.description??e.Description??e.Notes??e.notes??"")}function v(e){if(!l||!g)return;const o=h(e.properties),a=o?`<p style="font-size:1rem;color:var(--fg);line-height:1.6;margin:0 0 1.25rem 0;">${o}</p>`:"",p=k(e.properties);g.innerHTML=`
+        <h2 style="font-size:clamp(1.4rem, 3vw, 1.8rem);font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);line-height:1.2;font-family:var(--serif);letter-spacing:-0.01em;">${e.name}</h2>
+        ${a}
+        <div style="border-radius:var(--radius);border:1px solid var(--border);background:var(--card);padding:1.25rem;margin-bottom:1.25rem;">
+          ${p}
+        </div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+          <a href="${e.href}" style="display:inline-block;padding:0.55rem 1rem;border-radius:var(--radius);background:var(--primary);color:var(--primary-fg);font-size:0.8rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">View full page →</a>
+        </div>
+      `,l.style.display="block"}function f(){l&&(l.style.display="none")}y?.addEventListener("click",f),l?.addEventListener("click",e=>e.stopPropagation());for(const e of n){const o=e.caseStudy==="Y"?"#F0A030":"#B0A090",a=new s.Marker({color:o,scale:.8}).setLngLat([e.lng,e.lat]).addTo(r),p=new s.Popup({offset:18,closeButton:!1,closeOnClick:!1,className:"map-pin-popup"}).setHTML(`
+        <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
+          <div style="font-weight:600;font-size:0.85rem;color:var(--fg);margin-bottom:0.25rem;">${e.name}</div>
+          ${e.category?`<div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.25rem;">${e.category}</div>`:""}
+          ${e.place?`<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;">${e.place}</div>`:""}
+        </div>
+      `);a.setPopup(p);const m=a.getElement();m.style.cursor="pointer",m.addEventListener("mouseenter",()=>a.togglePopup()),m.addEventListener("mouseleave",()=>a.togglePopup()),m.addEventListener("click",b=>{b.stopPropagation(),v(e)}),d.extend([e.lng,e.lat])}n.length>1&&r.fitBounds(d,{padding:40,maxZoom:8}),r.on("click",f)}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",u):u();

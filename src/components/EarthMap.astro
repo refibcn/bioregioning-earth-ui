@@ -63,6 +63,23 @@ const markers = records
     const pathPrefix = r.sectionRoute ? r.sectionRoute.replace(/\/$/, '') : basePath.replace(/\/$/, '');
     const href = `${base}${pathPrefix}/${slug}`;
     const caseStudy = r.properties['Case Study'] ?? null;
+    const place = String(
+      r.properties['Place']?.address ??
+      r.properties['Place']?.name ??
+      r.properties['Place'] ??
+      r.properties['Scope'] ??
+      r.properties['scope'] ??
+      r.properties['Location'] ??
+      r.properties['location'] ??
+      ''
+    );
+    const category = String(
+      r.properties['Category'] ??
+      r.properties['category'] ??
+      r.properties['Type'] ??
+      r.properties['type'] ??
+      ''
+    );
     return {
       id: r.id,
       lat: coords.lat,
@@ -72,10 +89,12 @@ const markers = records
       url: r.url ?? null,
       properties: r.properties,
       caseStudy,
+      place,
+      category,
     };
   })
   .filter(Boolean) as Array<{
-    id: string; lat: number; lng: number; name: string; href: string; url: string | null; properties: Record<string, any>; caseStudy: string | null;
+    id: string; lat: number; lng: number; name: string; href: string; url: string | null; properties: Record<string, any>; caseStudy: string | null; place: string; category: string;
   }>;
 ---
 
@@ -204,7 +223,26 @@ const markers = records
         .setLngLat([m.lng, m.lat])
         .addTo(map);
 
-      marker.getElement().addEventListener('click', (e) => {
+      const popup = new maplibregl.Popup({
+        offset: 18,
+        closeButton: false,
+        closeOnClick: false,
+        className: 'map-pin-popup',
+      }).setHTML(`
+        <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
+          <div style="font-weight:600;font-size:0.85rem;color:var(--fg);margin-bottom:0.25rem;">${m.name}</div>
+          ${m.category ? `<div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.25rem;">${m.category}</div>` : ''}
+          ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;">${m.place}</div>` : ''}
+        </div>
+      `);
+      marker.setPopup(popup);
+
+      const markerEl = marker.getElement();
+      markerEl.style.cursor = 'pointer';
+      markerEl.addEventListener('mouseenter', () => marker.togglePopup());
+      markerEl.addEventListener('mouseleave', () => marker.togglePopup());
+
+      markerEl.addEventListener('click', (e) => {
         e.stopPropagation();
         showPanel(m);
       });

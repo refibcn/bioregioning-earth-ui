@@ -54,6 +54,23 @@ const markers = records
     const pathPrefix = r.sectionRoute ? r.sectionRoute.replace(/\/$/, '') : basePath.replace(/\/$/, '');
     const href = `${base}${pathPrefix}/${slug}`;
     const caseStudy = r.properties['Case Study'] ?? null;
+    const place = String(
+      r.properties['Place']?.address ??
+      r.properties['Place']?.name ??
+      r.properties['Place'] ??
+      r.properties['Scope'] ??
+      r.properties['scope'] ??
+      r.properties['Location'] ??
+      r.properties['location'] ??
+      ''
+    );
+    const category = String(
+      r.properties['Category'] ??
+      r.properties['category'] ??
+      r.properties['Type'] ??
+      r.properties['type'] ??
+      ''
+    );
     return {
       id: r.id,
       lat: coords.lat,
@@ -61,9 +78,11 @@ const markers = records
       name,
       href,
       caseStudy,
+      place,
+      category,
     };
   })
-  .filter(Boolean) as Array<{ id: string; lat: number; lng: number; name: string; href: string; caseStudy: string | null }>;
+  .filter(Boolean) as Array<{ id: string; lat: number; lng: number; name: string; href: string; caseStudy: string | null; place: string; category: string }>;
 
 const hasLookups = Object.keys(lookups).length > 0;
 ---
@@ -78,8 +97,8 @@ const hasLookups = Object.keys(lookups).length > 0;
   >
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <span id="panel-welcome-label" style="font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">Welcome</span>
       <button id="panel-back-btn" style="display:none;background:none;border:none;color:var(--muted);font-size:0.8rem;cursor:pointer;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;padding:0;" aria-label="Back to welcome">← Back</button>
+      <button id="panel-close-btn" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:0;" aria-label="Close panel">✕</button>
     </div>
 
     <!-- Scrollable content -->
@@ -93,11 +112,7 @@ const hasLookups = Object.keys(lookups).length > 0;
           <strong style="color:var(--fg);">{orgCount}</strong> {orgDescription}
         </p>
 
-        <!-- Map / Table toggle -->
-        <div style="display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);margin-bottom:1rem;">
-          <span style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.4rem 0.7rem;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--primary);color:var(--primary-fg);font-weight:500;cursor:default;">🗺️ Map</span>
-          <a href="#table" style="display:inline-flex;align-items:center;gap:0.35rem;padding:0.4rem 0.7rem;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);text-decoration:none;transition:background 0.12s;" onmouseenter="this.style.background='var(--surface)'" onmouseleave="this.style.background=''">🗂️ Table</a>
-        </div>
+
       </div>
 
       <!-- Detail view -->
@@ -111,7 +126,7 @@ const hasLookups = Object.keys(lookups).length > 0;
   <div style="display:none;">
     {records.map((r) => (
       <div id={`home-detail-${r.id}`} class="home-detail-template">
-        <OrgDetail record={r} lookups={lookups} mode="panel" />
+        <OrgDetail record={r} lookups={lookups} mode="panel" fullPageHref={r.href} />
       </div>
     ))}
   </div>
@@ -168,22 +183,22 @@ const hasLookups = Object.keys(lookups).length > 0;
 
     const welcomeDiv = document.getElementById('panel-welcome');
     const detailDiv = document.getElementById('panel-detail');
-    const welcomeLabel = document.getElementById('panel-welcome-label');
     const backBtn = document.getElementById('panel-back-btn');
+    const closeBtn = document.getElementById('panel-close-btn');
     const contentDiv = document.getElementById('panel-content');
     const panel = document.getElementById('home-panel');
+    let panelOpen = true;
 
     function showWelcome() {
       detailDiv.style.display = 'none';
       welcomeDiv.style.display = 'block';
-      welcomeLabel.style.display = 'inline';
       backBtn.style.display = 'none';
       if (contentDiv) contentDiv.scrollTop = 0;
     }
 
     function showDetail(m) {
+      openPanel();
       welcomeDiv.style.display = 'none';
-      welcomeLabel.style.display = 'none';
       backBtn.style.display = 'inline-block';
 
       if (hasLookups) {
@@ -206,7 +221,16 @@ const hasLookups = Object.keys(lookups).length > 0;
     }
 
     backBtn?.addEventListener('click', showWelcome);
+    closeBtn?.addEventListener('click', () => {
+      panel.style.display = 'none';
+      panelOpen = false;
+    });
     panel?.addEventListener('click', (e) => e.stopPropagation());
+
+    function openPanel() {
+      panel.style.display = 'flex';
+      panelOpen = true;
+    }
 
     function placeMarkers() {
       for (const m of markers) {
@@ -215,7 +239,26 @@ const hasLookups = Object.keys(lookups).length > 0;
           .setLngLat([m.lng, m.lat])
           .addTo(map);
 
-        marker.getElement().addEventListener('click', (e) => {
+        const popup = new maplibregl.Popup({
+          offset: 18,
+          closeButton: false,
+          closeOnClick: false,
+          className: 'map-pin-popup',
+        }).setHTML(`
+          <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
+            <div style="font-weight:600;font-size:0.85rem;color:var(--fg);margin-bottom:0.25rem;">${m.name}</div>
+            ${m.category ? `<div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.25rem;">${m.category}</div>` : ''}
+            ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;">${m.place}</div>` : ''}
+          </div>
+        `);
+        marker.setPopup(popup);
+
+        const markerEl = marker.getElement();
+        markerEl.style.cursor = 'pointer';
+        markerEl.addEventListener('mouseenter', () => marker.togglePopup());
+        markerEl.addEventListener('mouseleave', () => marker.togglePopup());
+
+        markerEl.addEventListener('click', (e) => {
           e.stopPropagation();
           showDetail(m);
         });

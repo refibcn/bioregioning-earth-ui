@@ -21,8 +21,9 @@ export interface Props {
     affiliations?: Map<string, NormalizedRecord>;
   };
   mode?: 'panel' | 'page';
+  fullPageHref?: string;
 }
-const { record, base = '', lookups, mode = 'page' } = Astro.props;
+const { record, base = '', lookups, mode = 'page', fullPageHref } = Astro.props;
 
 const isPanel = mode === 'panel';
 const title = getTitle(record);
@@ -45,7 +46,7 @@ function shouldShowBasicProperty(key: string, value: any): boolean {
     'source_file', 'id', 'location_lat', 'location_lng', 'name',
     'tags', 'activities', 'sources', 'network affiliation', 'network_affiliation',
     'background_section', 'vision_legacy_section', 'bioregional_context',
-    'description', 'website', 'place', 'category', 'type', 'temp', 'patterns', 'case study'
+    'description', 'website', 'place', 'category', 'type', 'temp', 'patterns', 'case study', 'links'
   ];
   if (hiddenKeys.includes(keyLower)) return false;
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return false;
@@ -93,13 +94,18 @@ const subHeadingSize = isPanel ? '1rem' : '1.1rem';
     </div>
   )}
 
-  {website && (
-    <div style="margin-bottom:1rem;">
+  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+    {website && (
       <a href={website} target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 0.9rem;border-radius:var(--radius);background:var(--primary);color:var(--primary-fg);font-size:0.75rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
         🌐 Visit website
       </a>
-    </div>
-  )}
+    )}
+    {isPanel && fullPageHref && (
+      <a href={fullPageHref} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 0.9rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);font-size:0.75rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
+        → View full page
+      </a>
+    )}
+  </div>
 
   {description && (
     <p style="font-size:0.95rem;color:var(--fg);line-height:1.6;margin:0 0 1rem 0;">{description}</p>
@@ -127,6 +133,20 @@ const subHeadingSize = isPanel ? '1rem' : '1.1rem';
     ))}
   </dl>
 
+  {affiliations.length > 0 && (
+    <div style="margin-bottom:1.5rem;">
+      <h3 style="font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin:0 0 0.75rem 0;">Network Affiliation</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+        {affiliations.map((org) => (
+          <a href={`${base}/organizations/${slugFor(org.id)}`} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);text-decoration:none;font-size:0.85rem;">
+            <span>{org.icon || '🌱'}</span>
+            <span style="word-break:break-word;overflow-wrap:anywhere;">{getTitle(org)}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
   {tags.length > 0 && (
     <div style="margin-bottom:1.5rem;">
       <h3 style={`font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin:0 0 0.75rem 0;`}>Tags</h3>
@@ -140,6 +160,8 @@ const subHeadingSize = isPanel ? '1rem' : '1.1rem';
       </div>
     </div>
   )}
+
+  <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0;" />
 
   {background && (
     <div style="margin-bottom:1.5rem;" set:html={renderMarkdown(background)} />
@@ -182,17 +204,5 @@ const subHeadingSize = isPanel ? '1rem' : '1.1rem';
     </div>
   )}
 
-  {affiliations.length > 0 && (
-    <div style="margin-bottom:1.5rem;">
-      <h3 style="font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin:0 0 0.75rem 0;">Network Affiliation</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-        {affiliations.map((org) => (
-          <a href={`${base}/organizations/${slugFor(org.id)}`} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);text-decoration:none;font-size:0.85rem;">
-            <span>{org.icon || '🌱'}</span>
-            <span style="word-break:break-word;overflow-wrap:anywhere;">{getTitle(org)}</span>
-          </a>
-        ))}
-      </div>
-    </div>
-  )}
+
 </div>
