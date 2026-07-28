@@ -42,22 +42,32 @@ const isOntology = section.id === 'ontology';
 const isSources = section.id === 'sources';
 
 let lookups = { tags: new Map(), activities: new Map(), sources: new Map(), affiliations: new Map() };
+let relatedOrgs: NormalizedRecord[] = [];
+
+const sections = loadSectionConfig();
+const related = loadRelatedDatabases();
+const sourcesSection = sections.find((s) => s.id === 'sources');
+const ontologySection = sections.find((s) => s.id === 'ontology');
+const orgsSection = sections.find((s) => s.id === 'bioregional-organizations');
+
+const [allSources, allOntology, allActivities, allOrgs] = await Promise.all([
+  sourcesSection?.database_id ? fetchDatabaseRecords(sourcesSection.database_id) : Promise.resolve([]),
+  ontologySection?.database_id ? fetchDatabaseRecords(ontologySection.database_id) : Promise.resolve([]),
+  related.activities ? fetchActivitiesRecords() : Promise.resolve([]),
+  orgsSection?.database_id ? fetchDatabaseRecords(orgsSection.database_id) : Promise.resolve([]),
+]);
+
 if (isOrgs) {
-  const sections = loadSectionConfig();
-  const related = loadRelatedDatabases();
-  const sourcesSection = sections.find((s) => s.id === 'sources');
-  const ontologySection = sections.find((s) => s.id === 'ontology');
-  const [allSources, allOntology, allActivities] = await Promise.all([
-    sourcesSection?.database_id ? fetchDatabaseRecords(sourcesSection.database_id) : Promise.resolve([]),
-    ontologySection?.database_id ? fetchDatabaseRecords(ontologySection.database_id) : Promise.resolve([]),
-    related.activities ? fetchActivitiesRecords() : Promise.resolve([]),
-  ]);
   lookups = {
     tags: buildRecordMap(allOntology),
     activities: buildRecordMap(allActivities),
     sources: buildRecordMap(allSources),
     affiliations: buildRecordMap(records),
   };
+}
+
+if (isSources) {
+  relatedOrgs = allOrgs;
 }
 
 const hasMapData = records.some((r) => hasCoords(r.properties));
@@ -88,7 +98,7 @@ const hasMapData = records.some((r) => hasCoords(r.properties));
 
     <!-- Section-specific views -->
     {isOntology && <OntologyGallery records={records} basePath={section.route} />}
-    {isSources && <SourcesTable records={records} basePath={section.route} />}
+    {isSources && <SourcesTable records={records} basePath={section.route} relatedOrgs={relatedOrgs} />}
     {!isOrgs && !isOntology && !isSources && <NetworkSection records={records} basePath={section.route} />}
   </main>
 </Layout>

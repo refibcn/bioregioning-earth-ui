@@ -194,8 +194,8 @@ const hasLookups = Object.keys(lookups).length > 0;
       zoom: markers.length === 1 ? 4 : 2,
     });
 
-    map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
-    map.addControl(new maplibregl.FullscreenControl(), 'bottom-left');
+    map.addControl(new maplibregl.NavigationControl(), 'top-left');
+    map.addControl(new maplibregl.FullscreenControl(), 'top-left');
     window.addEventListener('view-changed', (e) => {
       if (e.detail?.view === 'map') {
         setTimeout(() => map.resize(), 0);

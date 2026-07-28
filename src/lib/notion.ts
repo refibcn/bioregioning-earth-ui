@@ -178,9 +178,9 @@ export function resolveRelations(
 export function renderMarkdown(md: string): string {
   if (!md) return '';
   return md
-    .replace(/^### (.*$)/gim, '<h3 style="font-size:1.1rem;font-weight:500;margin:1.5rem 0 0.75rem 0;color:var(--fg);font-family:var(--serif);letter-spacing:-0.01em;">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 style="font-size:1.25rem;font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--serif);letter-spacing:-0.01em;">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 style="font-size:1.5rem;font-weight:500;margin:2rem 0 1rem 0;color:var(--fg);font-family:var(--serif);letter-spacing:-0.01em;">$1</h1>')
+    .replace(/^### (.*$)/gim, '<h3 style="font-size:1.1rem;font-weight:500;margin:1.5rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 style="font-size:1.25rem;font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 style="font-size:1.5rem;font-weight:500;margin:2rem 0 1rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">$1</h1>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">$1</a>')
