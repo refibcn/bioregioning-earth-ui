@@ -1,0 +1,238 @@
+---
+import type { NormalizedRecord } from '../lib/notion';
+
+export interface Props {
+  records: NormalizedRecord[];
+  tagMap: Map<string, NormalizedRecord>;
+  showHeader?: boolean;
+  orgCount?: number;
+  orgDescription?: string;
+}
+const { records, tagMap, showHeader = true, orgCount, orgDescription = '' } = Astro.props;
+const base = import.meta.env.BASE_URL;
+
+function getTitle(r: NormalizedRecord): string {
+  return String(r.properties['Name'] ?? r.properties['Title'] ?? r.properties['name'] ?? r.properties['title'] ?? 'Untitled');
+}
+
+function getCategory(r: NormalizedRecord): string {
+  return String(
+    r.properties['Category'] ?? r.properties['category'] ??
+    r.properties['Type'] ?? r.properties['type'] ?? ''
+  );
+}
+
+function getPlace(r: NormalizedRecord): string {
+  const place = r.properties['Place'] ?? r.properties['place'];
+  if (place && typeof place === 'object') {
+    if ('address' in place && place.address) return String(place.address);
+    if ('name' in place && place.name) return String(place.name);
+  }
+  return String(
+    r.properties['Scope'] ?? r.properties['scope'] ??
+    r.properties['Comarca'] ?? r.properties['comarca'] ??
+    r.properties['Location'] ?? r.properties['location'] ??
+    place ?? ''
+  );
+}
+
+function getDescription(r: NormalizedRecord): string {
+  return String(r.properties['Description'] ?? r.properties['description'] ?? '');
+}
+
+function getTagNames(r: NormalizedRecord): string[] {
+  const ids: string[] = Array.isArray(r.properties['Tags']) ? r.properties['Tags'] : [];
+  return ids
+    .map((id) => {
+      const tag = tagMap.get(id);
+      return tag ? getTitle(tag) : null;
+    })
+    .filter(Boolean) as string[];
+}
+
+function isCaseStudy(r: NormalizedRecord): boolean {
+  return String(r.properties['Case Study'] ?? r.properties['case study'] ?? '').toUpperCase() === 'Y';
+}
+
+const cards = records.map((r) => {
+  const slug = r.id.replace(/-/g, '');
+  return {
+    id: r.id,
+    slug,
+    href: `${base}/organizations/${slug}`,
+    name: getTitle(r),
+    category: getCategory(r),
+    place: getPlace(r),
+    description: getDescription(r),
+    icon: r.icon ?? '',
+    tags: getTagNames(r),
+    caseStudy: isCaseStudy(r),
+  };
+});
+
+const categories = Array.from(new Set(cards.map((c) => c.category).filter(Boolean))).sort();
+const allTags = Array.from(new Set(cards.flatMap((c) => c.tags))).sort();
+const count = orgCount ?? cards.length;
+---
+
+<div id="org-gallery-root">
+  {showHeader && (
+    <header style="margin-bottom:1.5rem;">
+      <h1 style="font-size:clamp(1.6rem, 3.2vw, 2.2rem);font-weight:500;margin:0 0 0.5rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">Organizations</h1>
+      <p style="color:var(--muted);margin:0;font-size:1rem;max-width:640px;">Card gallery view.</p>
+      <p style="color:var(--muted);margin:0.75rem 0 0 0;font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">{count} {orgDescription}</p>
+    </header>
+  )}
+
+  <!-- Filters -->
+  <div id="gallery-filters" style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem;padding:0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);align-items:center;">
+    <input
+      id="gallery-search"
+      type="text"
+      placeholder="Search by name..."
+      style="flex:1;min-width:180px;padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--fg);font-family:var(--sans);font-size:0.85rem;"
+    />
+    <select
+      id="gallery-filter-category"
+      style="padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--fg);font-family:var(--sans);font-size:0.85rem;"
+    >
+      <option value="">All categories</option>
+      {categories.map((c) => <option value={c}>{c}</option>)}
+    </select>
+    <select
+      id="gallery-filter-tags"
+      style="padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--fg);font-family:var(--sans);font-size:0.85rem;"
+    >
+      <option value="">All tags</option>
+      {allTags.map((t) => <option value={t}>{t}</option>)}
+    </select>
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <span style="font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);white-space:nowrap;">Case study</span>
+      <select
+        id="gallery-filter-case-study"
+        style="padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--fg);font-family:var(--sans);font-size:0.85rem;"
+      >
+        <option value="">All</option>
+        <option value="Y">Case study</option>
+        <option value="N">Not case study</option>
+      </select>
+    </div>
+    <button
+      id="gallery-filter-reset"
+      style="padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--muted);font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;"
+    >
+      Reset
+    </button>
+  </div>
+
+  <!-- Card grid -->
+  <div id="gallery-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:1rem;">
+    {cards.map((c) => (
+      <a
+        href={c.href}
+        class="gallery-card"
+        data-name={c.name.toLowerCase()}
+        data-category={c.category}
+        data-tags={c.tags.join('|')}
+        data-case-study={c.caseStudy ? 'Y' : 'N'}
+        style="display:flex;flex-direction:column;gap:0.6rem;padding:1.25rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);text-decoration:none;color:var(--fg);transition:transform 0.15s ease,border-color 0.15s ease,box-shadow 0.15s ease;"
+        onmouseenter="this.style.transform='translateY(-2px)';this.style.borderColor='var(--paper-200)';this.style.boxShadow='0 4px 20px rgba(42,24,16,0.06)';"
+        onmouseleave="this.style.transform='';this.style.borderColor='';this.style.boxShadow='';"
+      >
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;min-width:0;">
+            {c.icon && <span style="font-size:1.5rem;line-height:1;flex-shrink:0;">{c.icon}</span>}
+            <h2 style="margin:0;font-size:1.05rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;">{c.name}</h2>
+          </div>
+          {c.caseStudy && (
+            <span style="flex-shrink:0;font-size:0.65rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;padding:0.2rem 0.5rem;border-radius:var(--radius-pill);background:var(--pillar-flow-1);color:var(--pillar-flow-6);white-space:nowrap;">Case study</span>
+          )}
+        </div>
+
+        {c.category && (
+          <div style="font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);">
+            {c.category}
+          </div>
+        )}
+
+        {c.place && (
+          <div style="font-size:0.8rem;color:var(--muted);line-height:1.4;">
+            📍 {c.place}
+          </div>
+        )}
+
+        {c.description && (
+          <p style="margin:0;font-size:0.85rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
+            {c.description}
+          </p>
+        )}
+
+        {c.tags.length > 0 && (
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:auto;padding-top:0.4rem;">
+            {c.tags.slice(0, 4).map((tag) => (
+              <span style="font-size:0.7rem;padding:0.2rem 0.5rem;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-fg);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">
+                {tag}
+              </span>
+            ))}
+            {c.tags.length > 4 && (
+              <span style="font-size:0.7rem;padding:0.2rem 0.5rem;border-radius:var(--radius-pill);background:var(--surface);color:var(--muted);border:1px solid var(--border);font-family:var(--mono);">+{c.tags.length - 4}</span>
+            )}
+          </div>
+        )}
+      </a>
+    ))}
+  </div>
+
+  <p id="gallery-empty" style="display:none;color:var(--muted);text-align:center;padding:3rem 1rem;font-size:0.9rem;">No organizations match your filters.</p>
+</div>
+
+<script>
+  (function () {
+    const root = document.currentScript?.closest('#org-gallery-root') ?? document;
+    const searchInput = root.querySelector('#gallery-search');
+    const categorySelect = root.querySelector('#gallery-filter-category');
+    const tagsSelect = root.querySelector('#gallery-filter-tags');
+    const caseStudySelect = root.querySelector('#gallery-filter-case-study');
+    const resetBtn = root.querySelector('#gallery-filter-reset');
+    const cards = root.querySelectorAll('.gallery-card');
+    const emptyMsg = root.querySelector('#gallery-empty');
+
+    function applyFilters() {
+      const query = (searchInput?.value ?? '').toLowerCase().trim();
+      const category = categorySelect?.value ?? '';
+      const tag = tagsSelect?.value ?? '';
+      const caseStudy = caseStudySelect?.value ?? '';
+
+      let visible = 0;
+      cards.forEach((card) => {
+        const name = card.getAttribute('data-name') ?? '';
+        const cardCategory = card.getAttribute('data-category') ?? '';
+        const cardTags = (card.getAttribute('data-tags') ?? '').split('|').filter(Boolean);
+        const cardCaseStudy = card.getAttribute('data-case-study') ?? 'N';
+
+        const matchesSearch = !query || name.includes(query);
+        const matchesCategory = !category || cardCategory === category;
+        const matchesTag = !tag || cardTags.includes(tag);
+        const matchesCaseStudy = !caseStudy || cardCaseStudy === caseStudy;
+
+        const show = matchesSearch && matchesCategory && matchesTag && matchesCaseStudy;
+        (card as HTMLElement).style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+
+      if (emptyMsg) (emptyMsg as HTMLElement).style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    searchInput?.addEventListener('input', applyFilters);
+    categorySelect?.addEventListener('change', applyFilters);
+    tagsSelect?.addEventListener('change', applyFilters);
+    caseStudySelect?.addEventListener('change', applyFilters);
+    resetBtn?.addEventListener('click', () => {
+      if (searchInput) (searchInput as HTMLInputElement).value = '';
+      if (categorySelect) (categorySelect as HTMLSelectElement).value = '';
+      if (tagsSelect) (tagsSelect as HTMLSelectElement).value = '';
+      if (caseStudySelect) (caseStudySelect as HTMLSelectElement).value = '';
+      applyFilters();
+    });
+  })();
+</script>

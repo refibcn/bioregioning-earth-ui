@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import HomeEarthMap from '../components/HomeEarthMap.astro';
-import OrganizationsTable from '../components/OrganizationsTable.astro';
+import OrganizationsGallery from '../components/OrganizationsGallery.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, buildRecordMap } from '../lib/notion';
 
 const sections = loadSectionConfig();
@@ -38,6 +38,7 @@ const lookups = {
   sources: buildRecordMap(allSources),
   affiliations: buildRecordMap(orgRecords),
 };
+const tagMap = buildRecordMap(allOntology);
 ---
 
 <Layout title="Dashboard" description="Explore bioregional actors, projects, and opportunities" hideFooter={true}>
@@ -54,10 +55,10 @@ const lookups = {
         🗺️ Map
       </button>
       <button
-        data-view="table"
+        data-view="gallery"
         style="padding:0.55rem 1rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--card);color:var(--muted);border:none;cursor:pointer;"
       >
-        🗂️ Table
+        🗂️ Gallery
       </button>
     </div>
 
@@ -66,16 +67,10 @@ const lookups = {
       <HomeEarthMap records={mapMarkers} orgCount={orgCount} orgDescription={orgDescription} lookups={lookups} />
     </div>
 
-    <!-- Table view -->
-    <div id="table-view" style="display:none;width:100%;height:100%;overflow:auto;padding:4rem 1.5rem 1.5rem 1.5rem;box-sizing:border-box;">
+    <!-- Gallery view -->
+    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:4rem 1.5rem 1.5rem 1.5rem;box-sizing:border-box;">
       <div style="max-width:var(--max-w);margin:0 auto;">
-        <header style="margin-bottom:1.5rem;">
-          <h1 style="font-size:clamp(1.6rem, 3vw, 2.2rem);font-weight:500;margin:0 0 0.5rem 0;color:var(--fg);font-family:var(--serif);letter-spacing:-0.01em;">Organizations</h1>
-          <p style="color:var(--muted);margin:0;font-size:0.9rem;">
-            <strong>{orgCount}</strong> {orgDescription}
-          </p>
-        </header>
-        <OrganizationsTable records={orgRecords} basePath="/organizations" lookups={lookups} />
+        <OrganizationsGallery records={orgRecords} tagMap={tagMap} showHeader={false} orgCount={orgCount} orgDescription={orgDescription} />
       </div>
     </div>
   </main>
@@ -83,17 +78,17 @@ const lookups = {
   <script>
     function setView(view) {
       const mapView = document.getElementById('map-view');
-      const tableView = document.getElementById('table-view');
+      const galleryView = document.getElementById('gallery-view');
       const buttons = document.querySelectorAll('#view-toggle button');
 
-      if (!mapView || !tableView) return;
+      if (!mapView || !galleryView) return;
 
-      if (view === 'table') {
+      if (view === 'gallery') {
         mapView.style.display = 'none';
-        tableView.style.display = 'block';
+        galleryView.style.display = 'block';
       } else {
         mapView.style.display = 'block';
-        tableView.style.display = 'none';
+        galleryView.style.display = 'none';
         window.dispatchEvent(new CustomEvent('view-changed', { detail: { view } }));
       }
 
@@ -106,13 +101,13 @@ const lookups = {
     }
 
     function readHash() {
-      return window.location.hash === '#table' ? 'table' : 'map';
+      return window.location.hash === '#gallery' ? 'gallery' : 'map';
     }
 
     document.querySelectorAll('#view-toggle button').forEach((btn) => {
       btn.addEventListener('click', () => {
         const view = btn.dataset.view;
-        window.location.hash = view === 'table' ? 'table' : '';
+        window.location.hash = view === 'gallery' ? 'gallery' : '';
         setView(view);
       });
     });

@@ -6,13 +6,7 @@ const base = import.meta.env.BASE_URL;
 <Layout title="How to Explore the Knowledge Commons" description="A guide to navigating the Bioregional Knowledge Commons">
   <main style="max-width:720px;margin:0 auto;padding:2rem 1.5rem;">
     <header style="margin-bottom:2.5rem;">
-      <p style="font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);margin:0 0 0.75rem 0;">
-        <a href={`${base}/`} style="color:var(--muted);">Bioregional Knowledge Commons</a>
-      </p>
       <h1 style="font-size:clamp(1.8rem, 4vw, 2.6rem);font-weight:500;margin:0 0 1rem 0;color:var(--fg);font-family:var(--serif);letter-spacing:-0.01em;">How to explore the Knowledge Commons</h1>
-      <p style="color:var(--muted);margin:0;font-size:1.05rem;line-height:1.6;">
-        <a href={`${base}/organizations`} style="color:var(--primary);">Organizations</a> · <a href={`${base}/ontology`} style="color:var(--primary);">Ontology</a> · <a href={`${base}/sources`} style="color:var(--primary);">Sources</a> · <a href={`${base}/how-to-explore`} style="color:var(--primary);">How to Explore the Knowledge Commons</a>
-      </p>
     </header>
 
     <section style="margin-bottom:2rem;">
@@ -27,20 +21,20 @@ const base = import.meta.env.BASE_URL;
         Organizations is the best place to start. You'll land on a world map — each pin is an organization working in bioregional or regenerative practice somewhere in the world.
       </p>
       <p style="color:var(--fg);font-size:1rem;line-height:1.65;margin:0 0 1rem 0;">
-        The map includes bioregionally oriented organizations, full case studies with detailed background and activities, and support organizations and learning networks that enable or connect bioregional work.
+        Use the Map / Gallery toggle at the bottom-left to switch between the map and a card gallery of all organizations. The gallery lets you search by name and filter by category, tags, or case-study status.
       </p>
       <p style="color:var(--fg);font-size:1rem;line-height:1.65;margin:0;">
-        Click any pin on the map to open a side panel with the organization's details, or click the name in the table below to open its full page.
+        Click any pin on the map or any card in the gallery to open the organization's full page. Case-study organizations are marked with an orange pin on the map and a "Case study" badge in the gallery.
       </p>
     </section>
 
     <section style="margin-bottom:2.5rem;">
       <h2 style="font-size:1.4rem;font-weight:600;margin:0 0 1rem 0;color:var(--fg);font-family:var(--sans);">Ontology</h2>
       <p style="color:var(--fg);font-size:1rem;line-height:1.65;margin:0 0 1rem 0;">
-        Ontology is the shared vocabulary of the Knowledge Commons — the concepts and themes that cut across all the organizations. Think of it as a thematic index: if you're curious about a topic like governance, finance, or land stewardship, start here. Each concept links to the organizations and activities related to it.
+        Ontology is the shared vocabulary of the Knowledge Commons — the concepts and themes that cut across all the organizations. Think of it as a thematic index: if you're curious about a topic like governance, finance, or land stewardship, start here.
       </p>
       <p style="color:var(--fg);font-size:1rem;line-height:1.65;margin:0;">
-        There are two layers: themes and tags. The themes are broad topics that contain lots of different tags. You can see the full list of themes below. Click on the arrows on the left to uncover each theme's tags.
+        Themes are broad containers; each theme opens a page with its description, related tags, activities, organizations, and sources. Tags are the finer-grained concepts nested under each theme.
       </p>
     </section>
 
@@ -54,18 +48,15 @@ const base = import.meta.env.BASE_URL;
     <section style="margin-bottom:2rem;padding:1.5rem;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);">
       <h2 style="font-size:1.2rem;font-weight:600;margin:0 0 1rem 0;color:var(--fg);font-family:var(--sans);">A few things worth knowing</h2>
       <ul style="color:var(--fg);font-size:1rem;line-height:1.65;margin:0;padding-left:1.2rem;">
-        <li style="margin-bottom:0.5rem;">This knowledge base runs on Notion, a tool that organises information in interconnected tables. You don't need to know how it works — just click what interests you and use the back arrow to return. If you ever feel lost, the links at the top of any page will bring you back to the main sections.</li>
+        <li style="margin-bottom:0.5rem;">This knowledge base runs on Notion, a tool that organises information in interconnected tables. You don't need to know how it works — just click what interests you and use your browser's back button or the top navigation to return.</li>
         <li style="margin-bottom:0.5rem;">Not every organization has a full case study yet — the Knowledge Commons is a living project and some entries are more complete than others.</li>
-        <li style="margin-bottom:0.5rem;">If you have suggestions, know of work that should be here, want to collaborate, or are just curious about what's behind it, reach out at <a href="mailto:yo@andreaisa.com" style="color:var(--primary);">yo@andreaisa.com</a>.</li>
+        <li style="margin-bottom:0.5rem;">If you have suggestions, know of work that should be here, want to collaborate, or are just curious about what's behind it, reach out at <a href="mailto:hola@refibcn.cat" style="color:var(--primary);">hola@refibcn.cat</a>.</li>
       </ul>
     </section>
 
     <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:2rem;">
       <a href={`${base}/organizations`} style="display:inline-block;padding:0.6rem 1.2rem;border-radius:var(--radius);background:var(--primary);color:var(--primary-fg);font-size:0.85rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
         Explore Organizations →
-      </a>
-      <a href={`${base}/`} style="display:inline-block;padding:0.6rem 1.2rem;border-radius:var(--radius);color:var(--muted);font-size:0.85rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
-        ← Back to Dashboard
       </a>
     </div>
   </main>
