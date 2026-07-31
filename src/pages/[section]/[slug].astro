@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import OrgDetail from '../../components/OrgDetail.astro';
+import OntologyDetail from '../../components/OntologyDetail.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, buildRecordMap } from '../../lib/notion';
 import type { NormalizedRecord } from '../../lib/notion';
 
@@ -19,6 +20,32 @@ export async function getStaticPaths() {
     related.activities ? fetchActivitiesRecords() : Promise.resolve([]),
   ]);
 
+  function findParentRelationKey(items: NormalizedRecord[]): string | null {
+    const itemIds = new Set(items.map((r) => r.id));
+    const candidateScores: Record<string, number> = {};
+    for (const r of items) {
+      for (const [key, value] of Object.entries(r.properties)) {
+        if (Array.isArray(value) && value.length > 0 && value.every((v) => typeof v === 'string' && v.replace(/-/g, '').length === 32)) {
+          if (value.some((v) => itemIds.has(v))) {
+            candidateScores[key] = (candidateScores[key] ?? 0) + 1;
+          }
+        }
+      }
+    }
+    const sorted = Object.entries(candidateScores).sort((a, b) => b[1] - a[1]);
+    return sorted[0]?.[0] ?? null;
+  }
+
+  function getChildren(parentId: string, items: NormalizedRecord[], parentKey: string | null): NormalizedRecord[] {
+    if (!parentKey) return [];
+    return items.filter((r) => {
+      const raw = r.properties[parentKey];
+      return Array.isArray(raw) && raw.includes(parentId);
+    });
+  }
+
+  const ontologyParentKey = findParentRelationKey(allOntology);
+
   const allPaths: {
     params: { section: string; slug: string };
     props: {
@@ -31,12 +58,14 @@ export async function getStaticPaths() {
         sources: Map<string, NormalizedRecord>;
         affiliations: Map<string, NormalizedRecord>;
       };
+      children?: NormalizedRecord[];
     };
   }[] = [];
 
   for (const section of sections) {
     if (!section.database_id) continue;
     const records = await fetchSectionRecords(section);
+    const isOntologySection = section.id === 'ontology';
     for (const r of records) {
       allPaths.push({
         params: {
@@ -53,6 +82,7 @@ export async function getStaticPaths() {
             sources: buildRecordMap(allSources),
             affiliations: buildRecordMap(allOrgs),
           },
+          children: isOntologySection ? getChildren(r.id, allOntology, ontologyParentKey) : undefined,
         },
       });
     }
@@ -71,11 +101,29 @@ interface Props {
     sources: Map<string, NormalizedRecord>;
     affiliations: Map<string, NormalizedRecord>;
   };
+  children?: NormalizedRecord[];
 }
 
-const { record, sectionRoute, sectionName, lookups } = Astro.props;
+const { record, sectionRoute, sectionName, lookups, children = [] } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const isOrgs = sectionRoute === '/organizations';
+const isOntology = sectionRoute === '/ontology';
+
+const relatedActivities = isOntology
+  ? (Array.isArray(record.properties['Activities']) ? record.properties['Activities'] : [])
+      .map((id) => lookups.activities?.get(id))
+      .filter(Boolean) as NormalizedRecord[]
+  : [];
+const relatedOrganizations = isOntology
+  ? (Array.isArray(record.properties['Organizations']) ? record.properties['Organizations'] : [])
+      .map((id) => lookups.affiliations?.get(id))
+      .filter(Boolean) as NormalizedRecord[]
+  : [];
+const relatedSources = isOntology
+  ? (Array.isArray(record.properties['Sources']) ? record.properties['Sources'] : [])
+      .map((id) => lookups.sources?.get(id))
+      .filter(Boolean) as NormalizedRecord[]
+  : [];
 
 const title = record.properties['Name']?.toString() ?? record.properties['Title']?.toString() ?? 'Untitled';
 const description = (record.properties['Description']?.toString() ?? record.properties['description']?.toString() ?? '').slice(0, 200);
@@ -90,6 +138,16 @@ const description = (record.properties['Description']?.toString() ?? record.prop
     <div style="border-radius:var(--radius);border:1px solid var(--border);background:var(--card);padding:1.5rem;margin-bottom:1.5rem;">
       {isOrgs ? (
         <OrgDetail record={record} lookups={lookups} mode="page" />
+      ) : isOntology ? (
+        <OntologyDetail
+          record={record}
+          base={base}
+          children={children}
+          activities={relatedActivities}
+          organizations={relatedOrganizations}
+          sources={relatedSources}
+          mode="page"
+        />
       ) : (
         <dl style="display:grid;grid-template-columns:1fr;gap:1rem;margin:0;">
           {Object.entries(record.properties).map(([key, value]) => {

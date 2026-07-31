@@ -42,6 +42,7 @@ const isOntology = section.id === 'ontology';
 const isSources = section.id === 'sources';
 
 let lookups = { tags: new Map(), activities: new Map(), sources: new Map(), affiliations: new Map() };
+let ontologyLookups = { activities: new Map(), organizations: new Map(), sources: new Map() };
 let relatedOrgs: NormalizedRecord[] = [];
 
 const sections = loadSectionConfig();
@@ -68,6 +69,14 @@ if (isOrgs) {
 
 if (isSources) {
   relatedOrgs = allOrgs;
+}
+
+if (isOntology) {
+  ontologyLookups = {
+    activities: buildRecordMap(allActivities),
+    organizations: buildRecordMap(allOrgs),
+    sources: buildRecordMap(allSources),
+  };
 }
 
 const hasMapData = records.some((r) => hasCoords(r.properties));
@@ -97,7 +106,7 @@ const hasMapData = records.some((r) => hasCoords(r.properties));
     )}
 
     <!-- Section-specific views -->
-    {isOntology && <OntologyGallery records={records} basePath={section.route} />}
+    {isOntology && <OntologyGallery records={records} basePath={section.route} lookups={ontologyLookups} />}
     {isSources && <SourcesTable records={records} basePath={section.route} relatedOrgs={relatedOrgs} />}
     {!isOrgs && !isOntology && !isSources && <NetworkSection records={records} basePath={section.route} />}
   </main>

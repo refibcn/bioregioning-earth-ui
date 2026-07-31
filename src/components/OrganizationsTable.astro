@@ -147,17 +147,17 @@ const caseStudyOptions = [
   </div>
 
   <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-    <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.9rem;table-layout:fixed;">
       <thead>
         <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
-          <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Icon</th>
-          <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Name</th>
-          <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Website</th>
-          <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Description</th>
-          <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Place</th>
-          <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Tags</th>
-          <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Case study</th>
-          <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Full record</th>
+          <th style="width:44px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Icon</th>
+          <th style="width:18%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Name</th>
+          <th style="width:54px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Website</th>
+          <th style="width:50%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Description</th>
+          <th style="width:12%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Place</th>
+          <th style="width:14%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Tags</th>
+          <th style="width:80px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Case study</th>
+          <th style="width:80px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Full record</th>
         </tr>
       </thead>
       <tbody>
@@ -176,7 +176,7 @@ const caseStudyOptions = [
             onmouseleave="this.style.background=''"
           >
             <td style="padding:0.6rem 1rem;font-size:1.1rem;line-height:1;">{r.icon}</td>
-            <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;">{r.name}</td>
+            <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.name}</td>
             <td style="padding:0.6rem 1rem;">
               {r.url ? (
                 <a
@@ -193,22 +193,22 @@ const caseStudyOptions = [
                 <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius);color:var(--border);font-size:0.85rem;">—</span>
               )}
             </td>
-            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;max-width:520px;">
+            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;">
               <span style="display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
                 {r.description}
               </span>
             </td>
-            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;">{r.place}</td>
+            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.place}</td>
             <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;">
               {r.tags.length > 0 ? (
                 <div style="display:flex;flex-wrap:wrap;gap:0.25rem;">
-                  {r.tags.slice(0, 3).map((tag) => (
-                    <span style="font-size:0.7rem;padding:0.15rem 0.4rem;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-fg);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">
+                  {r.tags.slice(0, 2).map((tag) => (
+                    <span style="font-size:0.65rem;padding:0.12rem 0.35rem;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-fg);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">
                       {tag}
                     </span>
                   ))}
-                  {r.tags.length > 3 && (
-                    <span style="font-size:0.7rem;padding:0.15rem 0.4rem;border-radius:var(--radius-pill);background:var(--surface);color:var(--muted);border:1px solid var(--border);font-family:var(--mono);">+{r.tags.length - 3}</span>
+                  {r.tags.length > 2 && (
+                    <span style="font-size:0.65rem;padding:0.12rem 0.35rem;border-radius:var(--radius-pill);background:var(--surface);color:var(--muted);border:1px solid var(--border);font-family:var(--mono);">+{r.tags.length - 2}</span>
                   )}
                 </div>
               ) : (
