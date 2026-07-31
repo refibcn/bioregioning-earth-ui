@@ -3,9 +3,9 @@ import Layout from '../../layouts/Layout.astro';
 import NetworkSection from '../../components/NetworkSection.astro';
 import OntologyGallery from '../../components/OntologyGallery.astro';
 import SourcesTable from '../../components/SourcesTable.astro';
-import OrganizationsTable from '../../components/OrganizationsTable.astro';
+import OrganizationsGallery from '../../components/OrganizationsGallery.astro';
 import EarthMap from '../../components/EarthMap.astro';
-import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, buildRecordMap } from '../../lib/notion';
+import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, fetchPageBlocks, renderBlocksToHtml, buildRecordMap } from '../../lib/notion';
 
 export async function getStaticPaths() {
   const sections = loadSectionConfig();
@@ -71,12 +71,23 @@ if (isSources) {
   relatedOrgs = allOrgs;
 }
 
+let ontologyPageContents: Record<string, string> = {};
+
 if (isOntology) {
   ontologyLookups = {
     activities: buildRecordMap(allActivities),
     organizations: buildRecordMap(allOrgs),
     sources: buildRecordMap(allSources),
   };
+  // Fetch page body content for ontology parent items so side panels can show it.
+  for (const r of records) {
+    try {
+      const blocks = await fetchPageBlocks(r.id);
+      ontologyPageContents[r.id] = await renderBlocksToHtml(blocks);
+    } catch (e) {
+      ontologyPageContents[r.id] = '';
+    }
+  }
 }
 
 const hasMapData = records.some((r) => hasCoords(r.properties));
@@ -98,15 +109,15 @@ const hasMapData = records.some((r) => hasCoords(r.properties));
       </section>
     )}
 
-    <!-- Table view for Organizations -->
+    <!-- Gallery view for Organizations -->
     {isOrgs && (
       <section style="margin-bottom:2.5rem;">
-        <OrganizationsTable records={records} basePath={section.route} lookups={lookups} />
+        <OrganizationsGallery records={records} tagMap={buildRecordMap(allOntology)} orgCount={records.length} orgDescription="Bioregional actors and initiatives currently mapped" />
       </section>
     )}
 
     <!-- Section-specific views -->
-    {isOntology && <OntologyGallery records={records} basePath={section.route} lookups={ontologyLookups} />}
+    {isOntology && <OntologyGallery records={records} basePath={section.route} lookups={ontologyLookups} pageContents={ontologyPageContents} />}
     {isSources && <SourcesTable records={records} basePath={section.route} relatedOrgs={relatedOrgs} />}
     {!isOrgs && !isOntology && !isSources && <NetworkSection records={records} basePath={section.route} />}
   </main>

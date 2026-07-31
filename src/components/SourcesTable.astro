@@ -66,17 +66,17 @@ const rows = records.map((r) => {
 ---
 
 <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-  <table style="width:100%;border-collapse:collapse;font-size:0.9rem;table-layout:fixed;">
+  <table style="width:100%;min-width:800px;border-collapse:collapse;font-size:0.9rem;table-layout:fixed;">
     <thead>
       <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
         <th style="width:10%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Type</th>
         <th style="width:18%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Name</th>
-        <th style="width:52%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Description</th>
-        <th style="width:13%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Organizations</th>
-        <th style="width:70px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Full record</th>
+        <th style="width:46%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Description</th>
+        <th style="width:19%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Organizations</th>
+        <th style="width:7%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Full record</th>
       </tr>
     </thead>
-    <tbody style="overflow:hidden;">
+    <tbody style="overflow:hidden;background:var(--card);">
       {rows.map((r) => (
         <tr style="border-bottom:1px solid var(--border);overflow:hidden;">
           <td style="padding:0.6rem 1rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top;">

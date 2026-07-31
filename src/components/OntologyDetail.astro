@@ -36,29 +36,23 @@ function slugFor(id: string): string {
   return id.replace(/-/g, '');
 }
 
-function hasRelationTo(recordIds: string[], targetId: string): boolean {
-  return recordIds.includes(targetId);
+function recordReferencesTarget(r: NormalizedRecord, targetId: string): boolean {
+  for (const value of Object.values(r.properties)) {
+    if (Array.isArray(value) && value.some((v) => typeof v === 'string' && v === targetId)) {
+      return true;
+    }
+  }
+  return false;
 }
 
-// Resolve reverse relations: find records whose Tags/Activities/etc point to this ontology item.
+// Resolve reverse relations: find records whose relation properties point to this ontology item.
 const allActivities = Array.from(lookups.activities?.values() ?? []);
 const allOrganizations = Array.from(lookups.organizations?.values() ?? []);
 const allSources = Array.from(lookups.sources?.values() ?? []);
 
-const relatedActivities = allActivities.filter((r) => {
-  const tags: string[] = Array.isArray(r.properties['Tags']) ? r.properties['Tags'] : [];
-  return tags.includes(record.id);
-});
-
-const relatedOrganizations = allOrganizations.filter((r) => {
-  const tags: string[] = Array.isArray(r.properties['Tags']) ? r.properties['Tags'] : [];
-  return tags.includes(record.id);
-});
-
-const relatedSources = allSources.filter((r) => {
-  const tags: string[] = Array.isArray(r.properties['Tags']) ? r.properties['Tags'] : [];
-  return tags.includes(record.id);
-});
+const relatedActivities = allActivities.filter((r) => recordReferencesTarget(r, record.id));
+const relatedOrganizations = allOrganizations.filter((r) => recordReferencesTarget(r, record.id));
+const relatedSources = allSources.filter((r) => recordReferencesTarget(r, record.id));
 
 const headingSize = isPanel ? '1.15rem' : '1.25rem';
 const sectionHeadingSize = '1.25rem';
