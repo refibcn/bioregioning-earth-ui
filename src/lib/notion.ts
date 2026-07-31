@@ -222,3 +222,94 @@ export function getCategory(record: NormalizedRecord): string {
     ''
   );
 }
+
+export async function fetchPageBlocks(pageId: string): Promise<any[]> {
+  const notion = getClient();
+  const results: any[] = [];
+  let cursor: string | undefined = undefined;
+
+  do {
+    const response: any = await notion.blocks.children.list({
+      block_id: pageId,
+      start_cursor: cursor,
+    });
+    results.push(...response.results);
+    cursor = response.next_cursor;
+  } while (cursor);
+
+  return results;
+}
+
+function richTextToHtml(richText: any[]): string {
+  if (!richText || richText.length === 0) return '';
+  return richText.map((t) => {
+    let text = t.plain_text ?? '';
+    if (t.annotations?.bold) text = `<strong>${text}</strong>`;
+    if (t.annotations?.italic) text = `<em>${text}</em>`;
+    if (t.annotations?.underline) text = `<u>${text}</u>`;
+    if (t.annotations?.strikethrough) text = `<s>${text}</s>`;
+    if (t.annotations?.code) text = `<code style="font-family:var(--mono);background:var(--surface);padding:0.1rem 0.25rem;border-radius:var(--radius-sm);">${text}</code>`;
+    if (t.href) text = `<a href="${t.href}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">${text}</a>`;
+    return text;
+  }).join('');
+}
+
+export async function renderBlocksToHtml(blocks: any[]): Promise<string> {
+  const parts: string[] = [];
+
+  for (const block of blocks) {
+    const type = block.type;
+    const value = block[type];
+    if (!value) continue;
+
+    const text = richTextToHtml(value.rich_text ?? value.text ?? []);
+
+    switch (type) {
+      case 'paragraph':
+        if (text) parts.push(`<p style="font-size:0.95rem;color:var(--fg);line-height:1.6;margin:0 0 0.75rem 0;">${text}</p>`);
+        break;
+      case 'heading_1':
+        parts.push(`<h2 style="font-size:1.5rem;font-weight:500;margin:2rem 0 1rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">${text}</h2>`);
+        break;
+      case 'heading_2':
+        parts.push(`<h2 style="font-size:1.25rem;font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">${text}</h2>`);
+        break;
+      case 'heading_3':
+        parts.push(`<h3 style="font-size:1.1rem;font-weight:500;margin:1.5rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">${text}</h3>`);
+        break;
+      case 'bulleted_list_item':
+        parts.push(`<li style="font-size:0.95rem;color:var(--fg);line-height:1.6;margin:0 0 0.35rem 0;">${text}</li>`);
+        break;
+      case 'numbered_list_item':
+        parts.push(`<li style="font-size:0.95rem;color:var(--fg);line-height:1.6;margin:0 0 0.35rem 0;">${text}</li>`);
+        break;
+      case 'quote':
+        parts.push(`<blockquote style="border-left:3px solid var(--border);padding-left:1rem;margin:0 0 1rem 0;color:var(--muted);font-size:0.95rem;line-height:1.6;">${text}</blockquote>`);
+        break;
+      case 'callout':
+        parts.push(`<div style="display:flex;gap:0.75rem;align-items:flex-start;padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);margin:0 0 1rem 0;"><span style="font-size:1.2rem;flex-shrink:0;">${value.icon?.emoji ?? '💡'}</span><div style="font-size:0.95rem;color:var(--fg);line-height:1.6;">${text}</div></div>`);
+        break;
+      case 'divider':
+        parts.push(`<hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0;" />`);
+        break;
+      case 'image':
+        const imgUrl = value.external?.url ?? value.file?.url ?? '';
+        if (imgUrl) parts.push(`<img src="${imgUrl}" alt="" style="max-width:100%;border-radius:var(--radius);margin:0 0 1rem 0;" />`);
+        break;
+      case 'bookmark':
+        parts.push(`<a href="${value.url}" target="_blank" rel="noopener noreferrer" style="display:block;padding:0.75rem 1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--fg);text-decoration:none;margin:0 0 1rem 0;font-size:0.9rem;">${value.url}</a>`);
+        break;
+      case 'link_to_page':
+        const linkedPageId = value.page_id ?? value.database_id ?? '';
+        if (linkedPageId) parts.push(`<a href="${linkedPageId.replace(/-/g, '')}" style="display:block;padding:0.75rem 1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--primary);text-decoration:none;margin:0 0 1rem 0;font-size:0.9rem;">Linked page</a>`);
+        break;
+      case 'table_of_contents':
+        break;
+      default:
+        if (text) parts.push(`<p style="font-size:0.95rem;color:var(--fg);line-height:1.6;margin:0 0 0.75rem 0;">${text}</p>`);
+        break;
+    }
+  }
+
+  return parts.join('');
+}

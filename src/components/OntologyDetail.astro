@@ -1,6 +1,6 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
-import { getTitle, getDescription, renderMarkdown } from '../lib/notion';
+import { getTitle, getDescription } from '../lib/notion';
 
 function getSourceIcon(src: NormalizedRecord) {
   const type = String(src.properties['Source type'] ?? src.properties['source type'] ?? '').toLowerCase();
@@ -15,22 +15,50 @@ export interface Props {
   record: NormalizedRecord;
   base?: string;
   children?: NormalizedRecord[];
-  activities?: NormalizedRecord[];
-  organizations?: NormalizedRecord[];
-  sources?: NormalizedRecord[];
+  pageContent?: string;
+  lookups?: {
+    tags?: Map<string, NormalizedRecord>;
+    activities?: Map<string, NormalizedRecord>;
+    organizations?: Map<string, NormalizedRecord>;
+    sources?: Map<string, NormalizedRecord>;
+    affiliations?: Map<string, NormalizedRecord>;
+  };
   mode?: 'panel' | 'page';
   fullPageHref?: string;
 }
-const { record, base = '', children = [], activities = [], organizations = [], sources = [], mode = 'page', fullPageHref } = Astro.props;
+const { record, base = '', children = [], pageContent = '', lookups = {}, mode = 'page', fullPageHref } = Astro.props;
 
 const isPanel = mode === 'panel';
 const title = getTitle(record);
 const description = getDescription(record);
-const background = String(record.properties['background_section'] ?? record.properties['Background_section'] ?? '');
 
 function slugFor(id: string): string {
   return id.replace(/-/g, '');
 }
+
+function hasRelationTo(recordIds: string[], targetId: string): boolean {
+  return recordIds.includes(targetId);
+}
+
+// Resolve reverse relations: find records whose Tags/Activities/etc point to this ontology item.
+const allActivities = Array.from(lookups.activities?.values() ?? []);
+const allOrganizations = Array.from(lookups.organizations?.values() ?? []);
+const allSources = Array.from(lookups.sources?.values() ?? []);
+
+const relatedActivities = allActivities.filter((r) => {
+  const tags: string[] = Array.isArray(r.properties['Tags']) ? r.properties['Tags'] : [];
+  return tags.includes(record.id);
+});
+
+const relatedOrganizations = allOrganizations.filter((r) => {
+  const tags: string[] = Array.isArray(r.properties['Tags']) ? r.properties['Tags'] : [];
+  return tags.includes(record.id);
+});
+
+const relatedSources = allSources.filter((r) => {
+  const tags: string[] = Array.isArray(r.properties['Tags']) ? r.properties['Tags'] : [];
+  return tags.includes(record.id);
+});
 
 const headingSize = isPanel ? '1.15rem' : '1.25rem';
 const sectionHeadingSize = '1.25rem';
@@ -56,10 +84,6 @@ const sectionHeadingSize = '1.25rem';
 
   <hr style="border:none;border-top:1px solid var(--border);margin:2rem 0;" />
 
-  {background && (
-    <div style="margin-bottom:1.5rem;" set:html={renderMarkdown(background)} />
-  )}
-
   {children.length > 0 && (
     <div style="margin-bottom:1.5rem;">
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Sub-items</h3>
@@ -79,11 +103,11 @@ const sectionHeadingSize = '1.25rem';
     </div>
   )}
 
-  {activities.length > 0 && (
+  {relatedActivities.length > 0 && (
     <div style="margin-bottom:1.5rem;">
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Activities</h3>
       <div style="display:flex;flex-direction:column;gap:1rem;">
-        {activities.map((act) => (
+        {relatedActivities.map((act) => (
           <div style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
             <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.4rem;">
               <span style="font-size:1.2rem;line-height:1;flex-shrink:0;">{act.icon || '🔸'}</span>
@@ -98,11 +122,11 @@ const sectionHeadingSize = '1.25rem';
     </div>
   )}
 
-  {organizations.length > 0 && (
+  {relatedOrganizations.length > 0 && (
     <div style="margin-bottom:1.5rem;">
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Organizations</h3>
       <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-        {organizations.map((org) => (
+        {relatedOrganizations.map((org) => (
           <a href={`${base}/organizations/${slugFor(org.id)}`} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);text-decoration:none;font-size:0.85rem;">
             <span>{org.icon || '🌱'}</span>
             <span style="word-break:break-word;overflow-wrap:anywhere;">{getTitle(org)}</span>
@@ -112,7 +136,7 @@ const sectionHeadingSize = '1.25rem';
     </div>
   )}
 
-  {sources.length > 0 && (
+  {relatedSources.length > 0 && (
     <div style="margin-bottom:1.5rem;">
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Sources</h3>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
@@ -125,7 +149,7 @@ const sectionHeadingSize = '1.25rem';
             </tr>
           </thead>
           <tbody>
-            {sources.map((src) => {
+            {relatedSources.map((src) => {
               const sourceType = String(src.properties['Source type'] ?? src.properties['source type'] ?? '');
               return (
                 <tr style="border-bottom:1px solid var(--border);">
@@ -146,5 +170,9 @@ const sectionHeadingSize = '1.25rem';
         </table>
       </div>
     </div>
+  )}
+
+  {pageContent && (
+    <div style="margin-bottom:1.5rem;" set:html={pageContent} />
   )}
 </div>

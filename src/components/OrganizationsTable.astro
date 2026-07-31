@@ -150,17 +150,17 @@ const caseStudyOptions = [
     <table style="width:100%;border-collapse:collapse;font-size:0.9rem;table-layout:fixed;">
       <thead>
         <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
-          <th style="width:44px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Icon</th>
-          <th style="width:18%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Name</th>
-          <th style="width:54px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Website</th>
-          <th style="width:50%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Description</th>
-          <th style="width:12%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Place</th>
-          <th style="width:14%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Tags</th>
-          <th style="width:80px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Case study</th>
-          <th style="width:80px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Full record</th>
+          <th style="width:40px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Icon</th>
+          <th style="width:16%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Name</th>
+          <th style="width:48px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Website</th>
+          <th style="width:55%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Description</th>
+          <th style="width:10%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Place</th>
+          <th style="width:12%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Tags</th>
+          <th style="width:70px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Case study</th>
+          <th style="width:70px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Full record</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody style="overflow:hidden;">
         {rows.map((r) => (
           <tr
             class="org-row"
@@ -171,13 +171,13 @@ const caseStudyOptions = [
             data-category={r.type}
             data-tags={r.tags.join('|')}
             data-case-study={r.caseStudy === 'Y' ? 'Y' : 'N'}
-            style="border-bottom:1px solid var(--border);cursor:pointer;"
+            style="border-bottom:1px solid var(--border);cursor:pointer;overflow:hidden;"
             onmouseenter="this.style.background='var(--surface)'"
             onmouseleave="this.style.background=''"
           >
-            <td style="padding:0.6rem 1rem;font-size:1.1rem;line-height:1;">{r.icon}</td>
-            <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.name}</td>
-            <td style="padding:0.6rem 1rem;">
+            <td style="padding:0.6rem 1rem;font-size:1.1rem;line-height:1;overflow:hidden;vertical-align:top;">{r.icon}</td>
+            <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top;">{r.name}</td>
+            <td style="padding:0.6rem 1rem;overflow:hidden;vertical-align:top;">
               {r.url ? (
                 <a
                   href={r.url}
@@ -193,36 +193,36 @@ const caseStudyOptions = [
                 <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius);color:var(--border);font-size:0.85rem;">—</span>
               )}
             </td>
-            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;">
+            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;overflow:hidden;vertical-align:top;">
               <span style="display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">
                 {r.description}
               </span>
             </td>
-            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{r.place}</td>
-            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;">
+            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top;">{r.place}</td>
+            <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;overflow:hidden;vertical-align:top;">
               {r.tags.length > 0 ? (
-                <div style="display:flex;flex-wrap:wrap;gap:0.25rem;">
+                <div style="display:flex;flex-wrap:wrap;gap:0.2rem;max-width:100%;overflow:hidden;">
                   {r.tags.slice(0, 2).map((tag) => (
-                    <span style="font-size:0.65rem;padding:0.12rem 0.35rem;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-fg);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">
+                    <span style="font-size:0.65rem;padding:0.12rem 0.35rem;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-fg);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;overflow:hidden;text-overflow:ellipsis;max-width:100%;">
                       {tag}
                     </span>
                   ))}
                   {r.tags.length > 2 && (
-                    <span style="font-size:0.65rem;padding:0.12rem 0.35rem;border-radius:var(--radius-pill);background:var(--surface);color:var(--muted);border:1px solid var(--border);font-family:var(--mono);">+{r.tags.length - 2}</span>
+                    <span style="font-size:0.65rem;padding:0.12rem 0.35rem;border-radius:var(--radius-pill);background:var(--surface);color:var(--muted);border:1px solid var(--border);font-family:var(--mono);white-space:nowrap;">+{r.tags.length - 2}</span>
                   )}
                 </div>
               ) : (
                 <span style="color:var(--border);">—</span>
               )}
             </td>
-            <td style="padding:0.6rem 1rem;text-align:center;">
+            <td style="padding:0.6rem 1rem;text-align:center;overflow:hidden;vertical-align:top;">
               {r.caseStudy === 'Y' ? (
                 <span style="color:var(--success);font-size:1rem;" aria-label="Case study">✅</span>
               ) : (
                 <span style="color:var(--border);font-size:0.85rem;">/</span>
               )}
             </td>
-            <td style="padding:0.6rem 1rem;">
+            <td style="padding:0.6rem 1rem;overflow:hidden;vertical-align:top;">
               <button
                 class="org-view-btn"
                 data-id={r.id}

@@ -152,9 +152,7 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
               record={parent}
               base={base}
               children={resolveChildren(parent.id)}
-              activities={resolveActivities(parent)}
-              organizations={resolveOrganizations(parent)}
-              sources={resolveSources(parent)}
+              lookups={lookups}
               mode="panel"
               fullPageHref={href}
             />

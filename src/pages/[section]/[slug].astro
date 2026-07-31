@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import OrgDetail from '../../components/OrgDetail.astro';
 import OntologyDetail from '../../components/OntologyDetail.astro';
-import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, buildRecordMap } from '../../lib/notion';
+import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, fetchPageBlocks, renderBlocksToHtml, buildRecordMap } from '../../lib/notion';
 import type { NormalizedRecord } from '../../lib/notion';
 
 export async function getStaticPaths() {
@@ -19,6 +19,19 @@ export async function getStaticPaths() {
     ontologySection?.database_id ? fetchDatabaseRecords(ontologySection.database_id) : Promise.resolve([]),
     related.activities ? fetchActivitiesRecords() : Promise.resolve([]),
   ]);
+
+  // Fetch page content blocks for ontology records.
+  const ontologyBlocks: Record<string, string> = {};
+  if (ontologySection?.database_id) {
+    for (const r of allOntology) {
+      try {
+        const blocks = await fetchPageBlocks(r.id);
+        ontologyBlocks[r.id] = await renderBlocksToHtml(blocks);
+      } catch (e) {
+        ontologyBlocks[r.id] = '';
+      }
+    }
+  }
 
   function findParentRelationKey(items: NormalizedRecord[]): string | null {
     const itemIds = new Set(items.map((r) => r.id));
@@ -59,6 +72,7 @@ export async function getStaticPaths() {
         affiliations: Map<string, NormalizedRecord>;
       };
       children?: NormalizedRecord[];
+      pageContent?: string;
     };
   }[] = [];
 
@@ -83,6 +97,7 @@ export async function getStaticPaths() {
             affiliations: buildRecordMap(allOrgs),
           },
           children: isOntologySection ? getChildren(r.id, allOntology, ontologyParentKey) : undefined,
+          pageContent: isOntologySection ? ontologyBlocks[r.id] ?? '' : undefined,
         },
       });
     }
@@ -102,28 +117,15 @@ interface Props {
     affiliations: Map<string, NormalizedRecord>;
   };
   children?: NormalizedRecord[];
+  pageContent?: string;
 }
 
-const { record, sectionRoute, sectionName, lookups, children = [] } = Astro.props;
+const { record, sectionRoute, sectionName, lookups, children = [], pageContent = '' } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const isOrgs = sectionRoute === '/organizations';
 const isOntology = sectionRoute === '/ontology';
 
-const relatedActivities = isOntology
-  ? (Array.isArray(record.properties['Activities']) ? record.properties['Activities'] : [])
-      .map((id) => lookups.activities?.get(id))
-      .filter(Boolean) as NormalizedRecord[]
-  : [];
-const relatedOrganizations = isOntology
-  ? (Array.isArray(record.properties['Organizations']) ? record.properties['Organizations'] : [])
-      .map((id) => lookups.affiliations?.get(id))
-      .filter(Boolean) as NormalizedRecord[]
-  : [];
-const relatedSources = isOntology
-  ? (Array.isArray(record.properties['Sources']) ? record.properties['Sources'] : [])
-      .map((id) => lookups.sources?.get(id))
-      .filter(Boolean) as NormalizedRecord[]
-  : [];
+
 
 const title = record.properties['Name']?.toString() ?? record.properties['Title']?.toString() ?? 'Untitled';
 const description = (record.properties['Description']?.toString() ?? record.properties['description']?.toString() ?? '').slice(0, 200);
@@ -143,9 +145,8 @@ const description = (record.properties['Description']?.toString() ?? record.prop
           record={record}
           base={base}
           children={children}
-          activities={relatedActivities}
-          organizations={relatedOrganizations}
-          sources={relatedSources}
+          pageContent={pageContent}
+          lookups={lookups}
           mode="page"
         />
       ) : (
