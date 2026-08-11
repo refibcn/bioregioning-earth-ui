@@ -106,7 +106,7 @@ const hasLookups = Object.keys(lookups).length > 0;
 
       <!-- Welcome view -->
       <div id="panel-welcome">
-        <h1 style="font-size:clamp(1.5rem, 2.5vw, 2rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);font-family:var(--serif);letter-spacing:-0.01em;line-height:1.2;">Welcome to the Bioregional Knowledge Commons</h1>
+        <h1 style="font-size:clamp(1.5rem, 2.5vw, 2rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);letter-spacing:-0.01em;line-height:1.2;">Welcome to the Bioregional Knowledge Commons</h1>
         <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.9rem;line-height:1.55;">This is a public knowledge base documenting organizations and practices at the frontier of bioregional work — exploring how communities around the world are learning to live and govern within the logic of place.</p>
         <p style="color:var(--muted);margin:0 0 1rem 0;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
           <strong style="color:var(--fg);">{orgCount}</strong> {orgDescription}
@@ -233,7 +233,7 @@ const hasLookups = Object.keys(lookups).length > 0;
         }
       } else {
         detailDiv.innerHTML = `
-          <h2 style="font-size:clamp(1.3rem, 2.5vw, 1.6rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);line-height:1.2;font-family:var(--serif);letter-spacing:-0.01em;">${m.name}</h2>
+          <h2 style="font-size:clamp(1.3rem, 2.5vw, 1.6rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);line-height:1.2;letter-spacing:-0.01em;">${m.name}</h2>
           <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
             <a href="${m.href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:0.5rem 0.9rem;border-radius:var(--radius);background:var(--primary);color:var(--primary-fg);font-size:0.75rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">View full page →</a>
           </div>

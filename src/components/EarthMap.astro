@@ -198,7 +198,7 @@ const markers = records
       const propsHtml = renderProperties(m.properties);
 
       panelContent.innerHTML = `
-        <h2 style="font-size:clamp(1.4rem, 3vw, 1.8rem);font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);line-height:1.2;font-family:var(--serif);letter-spacing:-0.01em;">${m.name}</h2>
+        <h2 style="font-size:clamp(1.4rem, 3vw, 1.8rem);font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);line-height:1.2;letter-spacing:-0.01em;">${m.name}</h2>
         ${descHtml}
         <div style="border-radius:var(--radius);border:1px solid var(--border);background:var(--card);padding:1.25rem;margin-bottom:1.25rem;">
           ${propsHtml}

@@ -20,19 +20,27 @@ const base = import.meta.env.BASE_URL;
     <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,400&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <style is:global>
       :root {
-        /* ReFi BCN organic theme — Andrea three-pillar lock (260602) */
-        --paper-50: #F5F5F5;
-        --paper-100: #F1F0EE;
-        --paper-200: #DDD7CF;
-        --paper-700: #41312A;
-        --paper-900: #2A1810;
+        /* ReFi BCN brand resync (2026-08-11) — token names unchanged (everything below
+           threads through inline styles across every component here), values retargeted
+           to match refibcn.github.io's actual live palette
+           (src/styles/themes/editorial-organic.css). This file was still on the original
+           2026-06-02 three-pillar lock; refibcn relocked the pillar ramps and moved
+           --primary off the flow pillar onto a dedicated --terracotta, both on 2026-08-07 —
+           neither change had made it here. */
+        --paper-50: #fffffd;   /* was #F5F5F5 — refibcn's --paper */
+        --paper-100: #f8f4ed;  /* was #F1F0EE — refibcn's --ivory (surface-2) */
+        --paper-200: #DDD7CF;  /* unchanged — already ~equal to refibcn's --border-subtle rendered on paper */
+        --paper-700: color-mix(in srgb, var(--paper-900) 65%, var(--paper-50) 35%); /* was a fixed #41312A (too dark to read as "muted"); now derived the same way refibcn derives --rule/--text-muted, so it tracks --paper-900/50 automatically */
+        --paper-900: #221a12;  /* was #2A1810 — refibcn's --umber */
 
-        --pillar-neural-1: #D9E6FF; --pillar-neural-4: #598FFD; --pillar-neural-6: #2A4A9E;
-        --pillar-tissue-1: #E5F5D8; --pillar-tissue-4: #7CB342; --pillar-tissue-6: #2D5016;
-        --pillar-flow-1: #F9E2C3; --pillar-flow-4: #F0A030; --pillar-flow-6: #8B5038;
+        --terracotta: #D12B00; /* refibcn's brand primary anchor (2026-08-07) — didn't exist here before */
+
+        --pillar-neural-1: #4DEFFF; --pillar-neural-4: #0055FF; --pillar-neural-6: #000FA0;
+        --pillar-tissue-1: #D9FF4A; --pillar-tissue-4: #6DBF23; --pillar-tissue-6: #2C5A0D;
+        --pillar-flow-1: #FFBB26;   --pillar-flow-4: #FF5500;   --pillar-flow-6: #8A2200;
 
         --bg: var(--paper-50);
         --surface: var(--paper-100);
@@ -40,13 +48,15 @@ const base = import.meta.env.BASE_URL;
         --border: var(--paper-200);
         --fg: var(--paper-900);
         --muted: var(--paper-700);
-        --primary: var(--pillar-flow-4);
-        --primary-hover: var(--pillar-flow-6);
-        --primary-fg: var(--paper-900);
+        --primary: var(--terracotta);                                          /* was pillar-flow-4 — refibcn moved primary off the flow pillar 2026-08-07, partly to fix a contrast failure the flow-orange primary had */
+        --primary-hover: color-mix(in srgb, var(--terracotta) 82%, black 18%);  /* was pillar-flow-6 */
+        --primary-fg: #FFFFFF;                                                  /* was paper-900 (dark) — terracotta needs light text, not dark; matches refibcn's paper-on-primary */
         --accent: var(--pillar-neural-1);
         --accent-fg: var(--pillar-neural-6);
-        --success: #214033;
-        --info: #598FFD;
+        --success: var(--pillar-tissue-6);  /* was a standalone #214033 — refibcn derives success from tissue-dark */
+        --warning: var(--pillar-flow-1);    /* new — refibcn derives warning from flow-light; wasn't defined here at all */
+        --danger: #7A2618;                  /* new — refibcn's fixed brick red, distinct from primary; wasn't defined here at all */
+        --info: var(--pillar-neural-4);     /* was a standalone #598FFD — refibcn derives info from neural-mid */
 
         --radius: 0.5rem;
         --radius-sm: 0.25rem;
@@ -54,8 +64,12 @@ const base = import.meta.env.BASE_URL;
         --max-w: 1280px;
 
         --sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
-        --serif: "Averia Serif Libre", Georgia, serif;
-        --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace; /* briefly changed to IBM Plex Mono during the 2026-08-11 resync, matching what refibcn.github.io had at the time — refibcn corrected that same day (IBM Plex Mono → Geist Mono), so this reverts to match */
+        /* No --serif token — Averia is ReFi BCN's own display face (refibcn.github.io and other
+           surfaces the org owns), not something client/partner surfaces inherit. This site isn't
+           refibcn-owned, so it doesn't get the display face at all, not even for hero/page-opening
+           headings the way refibcn's own site uses it — those just stay --sans here. See
+           refibcn.github.io's Typography page for the rule this follows. */
       }
       * { box-sizing: border-box; }
       html, body {
