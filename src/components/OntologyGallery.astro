@@ -1,6 +1,7 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
 import { humanize } from '../lib/notion';
+import { splitParentsAndChildren } from '../lib/ontology';
 import OntologyDetail from './OntologyDetail.astro';
 import Badge from './Badge.astro';
 
@@ -29,59 +30,7 @@ function getIcon(r: NormalizedRecord): string {
   return r.icon ?? '•';
 }
 
-function getSortOrder(r: NormalizedRecord): number {
-  const raw = r.properties['Sort order'] ?? r.properties['sort order'] ?? r.properties['Sort Order'] ?? r.properties['sort_order'];
-  const num = typeof raw === 'number' ? raw : Number(raw);
-  return isNaN(num) ? Infinity : num;
-}
-
-// Detect a self-referential relation property that links ontology items to parents.
-function findParentRelationKey(items: NormalizedRecord[]): string | null {
-  const itemIds = new Set(items.map((r) => r.id));
-  const candidateScores: Record<string, number> = {};
-
-  for (const r of items) {
-    for (const [key, value] of Object.entries(r.properties)) {
-      if (Array.isArray(value) && value.length > 0 && value.every((v) => typeof v === 'string' && v.replace(/-/g, '').length === 32)) {
-        if (value.some((v) => itemIds.has(v))) {
-          candidateScores[key] = (candidateScores[key] ?? 0) + 1;
-        }
-      }
-    }
-  }
-
-  const sorted = Object.entries(candidateScores).sort((a, b) => b[1] - a[1]);
-  return sorted[0]?.[0] ?? null;
-}
-
-const parentKey = findParentRelationKey(records);
-
-const parents: NormalizedRecord[] = [];
-const childrenByParent: Record<string, NormalizedRecord[]> = {};
-
-for (const r of records) {
-  const rawParent = parentKey ? r.properties[parentKey] : null;
-  const parentId = Array.isArray(rawParent) ? rawParent[0] : rawParent;
-
-  if (!parentId) {
-    parents.push(r);
-  } else {
-    if (!childrenByParent[parentId]) childrenByParent[parentId] = [];
-    childrenByParent[parentId].push(r);
-  }
-}
-
-// Sort by Sort order property, then alphabetically.
-parents.sort((a, b) => {
-  const orderDiff = getSortOrder(a) - getSortOrder(b);
-  return orderDiff !== 0 ? orderDiff : getTitle(a).localeCompare(getTitle(b));
-});
-for (const pid of Object.keys(childrenByParent)) {
-  childrenByParent[pid].sort((a, b) => {
-    const orderDiff = getSortOrder(a) - getSortOrder(b);
-    return orderDiff !== 0 ? orderDiff : getTitle(a).localeCompare(getTitle(b));
-  });
-}
+const { parents, childrenByParent } = splitParentsAndChildren(records);
 
 const hasLookups = Object.keys(lookups).length > 0;
 
@@ -113,24 +62,24 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
       const children = resolveChildren(parent.id);
 
       return (
-        <section style="border:1px solid var(--border);border-radius:var(--radius);background:var(--card);overflow:hidden;">
-          <div class="ontology-parent-card" data-id={parent.id} style="padding:1.25rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer;">
-            <div style="display:flex;align-items:center;gap:0.75rem;">
-              <span style="font-size:1.6rem;line-height:1;flex-shrink:0;">{getIcon(parent)}</span>
-              <h2 style="margin:0;font-size:1.25rem;font-weight:600;font-family:var(--sans);letter-spacing:-0.01em;word-break:break-word;overflow-wrap:anywhere;">{humanize(getTitle(parent))}</h2>
-            </div>
-            {getDescription(parent) && (
-              <p style="margin:0.5rem 0 0 0;color:var(--muted);font-size:0.9rem;line-height:1.5;">{getDescription(parent)}</p>
-            )}
+        <section
+          class="ontology-parent-card"
+          data-id={parent.id}
+          data-full-href={href}
+          style="display:flex;flex-direction:column;gap:0.6rem;padding:1.25rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);cursor:pointer;"
+        >
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <span style="font-size:1.6rem;line-height:1;flex-shrink:0;">{getIcon(parent)}</span>
+            <h2 style="margin:0;font-size:1.25rem;font-weight:600;font-family:var(--sans);letter-spacing:-0.01em;word-break:break-word;overflow-wrap:anywhere;">{humanize(getTitle(parent))}</h2>
           </div>
-
+          {getDescription(parent) && (
+            <p style="margin:0;color:var(--muted);font-size:0.9rem;line-height:1.5;">{getDescription(parent)}</p>
+          )}
           {children.length > 0 && (
-            <div style="padding:1.25rem 1.5rem;">
-              <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-                {children.map((child) => (
-                  <Badge shape="square" icon={getIcon(child)}>{humanize(getTitle(child))}</Badge>
-                ))}
-              </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem;">
+              {children.map((child) => (
+                <Badge shape="square" icon={getIcon(child)}>{humanize(getTitle(child))}</Badge>
+              ))}
             </div>
           )}
         </section>
@@ -167,7 +116,7 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
     style="display:none;position:fixed;top:0;right:0;bottom:0;width:420px;max-width:40%;background:rgba(255,255,255,0.98);backdrop-filter:blur(12px);border-left:1px solid var(--border);overflow:hidden;box-shadow:-8px 0 32px rgba(42,24,16,0.12);font-family:var(--sans);z-index:100;flex-direction:column;"
   >
     <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <span style="font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">Ontology</span>
+      <a id="ontology-panel-viewfull" href="#" style="color:var(--muted);font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;text-decoration:none;" aria-label="View full page">→ View full page</a>
       <button id="ontology-panel-close" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:0;" aria-label="Close panel">✕</button>
     </div>
     <div id="ontology-panel-content" style="padding:1.25rem;overflow-y:auto;flex:1;"></div>
@@ -181,12 +130,16 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
     const panel = document.getElementById('ontology-side-panel');
     const panelContent = document.getElementById('ontology-panel-content');
     const panelClose = document.getElementById('ontology-panel-close');
+    const panelViewFull = document.getElementById('ontology-panel-viewfull');
 
     function openPanel(id) {
       if (!panel || !panelContent) return;
       const template = document.getElementById(`ontology-detail-${id}`);
       if (!template) return;
       panelContent.innerHTML = template.innerHTML;
+      const card = document.querySelector(`.ontology-parent-card[data-id="${id}"]`);
+      const fullHref = card?.getAttribute('data-full-href');
+      if (panelViewFull && fullHref) panelViewFull.setAttribute('href', fullHref);
       panel.style.display = 'flex';
       panelContent.scrollTop = 0;
     }

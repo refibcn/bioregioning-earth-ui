@@ -4,6 +4,7 @@ import OrgDetail from '../../components/OrgDetail.astro';
 import OntologyDetail from '../../components/OntologyDetail.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, fetchPageBlocks, renderBlocksToHtml, buildRecordMap } from '../../lib/notion';
 import type { NormalizedRecord } from '../../lib/notion';
+import { splitParentsAndChildren } from '../../lib/ontology';
 
 export async function getStaticPaths() {
   const sections = loadSectionConfig();
@@ -33,31 +34,10 @@ export async function getStaticPaths() {
     }
   }
 
-  function findParentRelationKey(items: NormalizedRecord[]): string | null {
-    const itemIds = new Set(items.map((r) => r.id));
-    const candidateScores: Record<string, number> = {};
-    for (const r of items) {
-      for (const [key, value] of Object.entries(r.properties)) {
-        if (Array.isArray(value) && value.length > 0 && value.every((v) => typeof v === 'string' && v.replace(/-/g, '').length === 32)) {
-          if (value.some((v) => itemIds.has(v))) {
-            candidateScores[key] = (candidateScores[key] ?? 0) + 1;
-          }
-        }
-      }
-    }
-    const sorted = Object.entries(candidateScores).sort((a, b) => b[1] - a[1]);
-    return sorted[0]?.[0] ?? null;
+  const { childrenByParent } = splitParentsAndChildren(allOntology);
+  function getChildren(parentId: string): NormalizedRecord[] {
+    return childrenByParent[parentId] ?? [];
   }
-
-  function getChildren(parentId: string, items: NormalizedRecord[], parentKey: string | null): NormalizedRecord[] {
-    if (!parentKey) return [];
-    return items.filter((r) => {
-      const raw = r.properties[parentKey];
-      return Array.isArray(raw) && raw.includes(parentId);
-    });
-  }
-
-  const ontologyParentKey = findParentRelationKey(allOntology);
 
   const allPaths: {
     params: { section: string; slug: string };
@@ -96,7 +76,7 @@ export async function getStaticPaths() {
             sources: buildRecordMap(allSources),
             affiliations: buildRecordMap(allOrgs),
           },
-          children: isOntologySection ? getChildren(r.id, allOntology, ontologyParentKey) : undefined,
+          children: isOntologySection ? getChildren(r.id) : undefined,
           pageContent: isOntologySection ? ontologyBlocks[r.id] ?? '' : undefined,
         },
       });
