@@ -1,4 +1,8 @@
 ---
+import type { NormalizedRecord } from '../lib/notion';
+import { getCoords } from '../lib/geo';
+import { toneForCategory } from '../lib/notion';
+
 export interface Props {
   records?: Array<{
     id: string;
@@ -7,33 +11,19 @@ export interface Props {
     sectionRoute?: string;
   }>;
   basePath?: string;
+  lookups?: {
+    tags?: Map<string, NormalizedRecord>;
+  };
 }
-const { records = [], basePath = '/' } = Astro.props;
+const { records = [], basePath = '/', lookups = {} } = Astro.props;
 const base = import.meta.env.BASE_URL;
 
-function getCoords(props: Record<string, any>): { lat: number; lng: number } | null {
-  // 1. Try Notion "location" / "place" type property (uses lat/lon)
-  for (const key of Object.keys(props)) {
-    const val = props[key];
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
-      const lat = val.latitude != null ? Number(val.latitude) : val.lat != null ? Number(val.lat) : null;
-      const lng = val.longitude != null ? Number(val.longitude) : val.lon != null ? Number(val.lon) : null;
-      if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
-        return { lat, lng };
-      }
-    }
-  }
-  // 2. Fall back to raw number properties
-  const lat = Number(
-    props['Lat'] ?? props['lat'] ?? props['Latitude'] ?? props['latitude'] ??
-    props['location_lat'] ?? props['location_Lat'] ?? props['Location_Lat']
-  );
-  const lng = Number(
-    props['Lng'] ?? props['lng'] ?? props['Longitude'] ?? props['longitude'] ??
-    props['location_lng'] ?? props['location_Lng'] ?? props['Location_Lng']
-  );
-  if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0)) return { lat, lng };
-  return null;
+function getTagNames(props: Record<string, any>): Array<{ name: string; icon?: string }> {
+  const ids: string[] = Array.isArray(props['Tags']) ? props['Tags'] : [];
+  return ids
+    .map((id) => lookups.tags?.get(id))
+    .filter(Boolean)
+    .map((t) => ({ name: String(t!.properties['Name'] ?? t!.properties['Title'] ?? 'Untitled').replace(/_/g, ' '), icon: t!.icon }));
 }
 
 function formatValue(value: any): string {
@@ -54,33 +44,36 @@ function formatValue(value: any): string {
   return String(value);
 }
 
-const markers = records
-  .map((r) => {
-    const coords = getCoords(r.properties);
-    if (!coords) return null;
-    const name = String(r.properties['Name'] ?? r.properties['Title'] ?? 'Untitled');
-    const slug = r.id.replace(/-/g, '');
-    const pathPrefix = r.sectionRoute ? r.sectionRoute.replace(/\/$/, '') : basePath.replace(/\/$/, '');
-    const href = `${base}${pathPrefix}/${slug}`;
-    const caseStudy = r.properties['Case Study'] ?? null;
-    const place = String(
-      r.properties['Place']?.address ??
-      r.properties['Place']?.name ??
-      r.properties['Place'] ??
-      r.properties['Scope'] ??
-      r.properties['scope'] ??
-      r.properties['Location'] ??
-      r.properties['location'] ??
-      ''
-    );
-    const category = String(
-      r.properties['Category'] ??
-      r.properties['category'] ??
-      r.properties['Type'] ??
-      r.properties['type'] ??
-      ''
-    );
-    return {
+const markerResults = records.map((r) => {
+  const coords = getCoords(r.properties);
+  if (!coords) return { record: r, marker: null };
+  const name = String(r.properties['Name'] ?? r.properties['Title'] ?? 'Untitled');
+  const slug = r.id.replace(/-/g, '');
+  const pathPrefix = r.sectionRoute ? r.sectionRoute.replace(/\/$/, '') : basePath.replace(/\/$/, '');
+  const href = `${base}${pathPrefix}/${slug}`;
+  const caseStudy = r.properties['Case Study'] ?? null;
+  const place = String(
+    r.properties['Place']?.address ??
+    r.properties['Place']?.name ??
+    r.properties['Place'] ??
+    r.properties['Scope'] ??
+    r.properties['scope'] ??
+    r.properties['Location'] ??
+    r.properties['location'] ??
+    ''
+  );
+  const category = String(
+    r.properties['Category'] ??
+    r.properties['category'] ??
+    r.properties['Type'] ??
+    r.properties['type'] ??
+    ''
+  );
+  const tags = getTagNames(r.properties).slice(0, 4);
+  const categoryTone = category ? toneForCategory(category) : 'neutral';
+  return {
+    record: r,
+    marker: {
       id: r.id,
       lat: coords.lat,
       lng: coords.lng,
@@ -91,15 +84,35 @@ const markers = records
       caseStudy,
       place,
       category,
-    };
-  })
-  .filter(Boolean) as Array<{
-    id: string; lat: number; lng: number; name: string; href: string; url: string | null; properties: Record<string, any>; caseStudy: string | null; place: string; category: string;
-  }>;
+      categoryTone,
+      tags,
+    },
+  };
+});
+
+const markers = markerResults.map((m) => m.marker).filter(Boolean) as Array<{
+  id: string; lat: number; lng: number; name: string; href: string; url: string | null; properties: Record<string, any>; caseStudy: string | null; place: string; category: string; categoryTone: string; tags: Array<{ name: string; icon?: string }>;
+}>;
+
+// Work Item A: orgs without a resolvable lat/lng used to vanish from every map with zero
+// indication (they'd still show up fine in Gallery, since that view is unfiltered) — surface
+// the gap instead of silently dropping it. The actual fix for these specific records is adding
+// Lat/Lng in Notion; this is a diagnostic only, not a workaround.
+const missingCoordsRecords = markerResults.filter((m) => m.marker === null).map((m) => m.record);
+if (missingCoordsRecords.length > 0) {
+  const names = missingCoordsRecords.map((r) => String(r.properties['Name'] ?? r.properties['Title'] ?? r.id)).join(', ');
+  console.warn(`[geo] ${missingCoordsRecords.length} record(s) missing coordinates, not shown on map: ${names}`);
+}
 ---
 
 <div style="position:relative;width:100%;height:480px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);">
   <div id="earth-map" style="width:100%;height:100%;" data-markers={JSON.stringify(markers)}></div>
+
+  {missingCoordsRecords.length > 0 && (
+    <div style="position:absolute;bottom:0.5rem;right:0.5rem;z-index:15;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
+      {missingCoordsRecords.length} organization{missingCoordsRecords.length === 1 ? '' : 's'} not shown (missing coordinates)
+    </div>
+  )}
 
   <!-- Side panel -->
   <div
@@ -230,8 +243,11 @@ const markers = records
         className: 'map-pin-popup',
       }).setHTML(`
         <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
-          <div style="font-weight:600;font-size:0.85rem;color:var(--fg);margin-bottom:0.25rem;">${m.name}</div>
-          ${m.category ? `<div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.25rem;">${m.category}</div>` : ''}
+          <div style="font-weight:600;font-size:0.95rem;color:var(--fg);margin-bottom:0.35rem;">${m.name}</div>
+          ${m.category || (m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.35rem;">
+            ${m.category ? `<span class="badge badge--sm badge--pill badge--${m.categoryTone}">${m.category}</span>` : ''}
+            ${(m.tags || []).map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
+          </div>` : ''}
           ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;">${m.place}</div>` : ''}
         </div>
       `);

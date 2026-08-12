@@ -1,6 +1,8 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
+import { humanize } from '../lib/notion';
 import OrgDetail from './OrgDetail.astro';
+import Badge from './Badge.astro';
 
 export interface Props {
   records: NormalizedRecord[];
@@ -58,18 +60,16 @@ function getUrl(r: NormalizedRecord): string | null {
   );
 }
 
-function getTagNames(r: NormalizedRecord): string[] {
+interface TagRef { name: string; icon: string }
+
+function getTags(r: NormalizedRecord): TagRef[] {
   const ids: string[] = Array.isArray(r.properties['Tags']) ? r.properties['Tags'] : [];
   return ids
     .map((id) => {
       const tag = lookups.tags?.get(id);
-      return tag ? getTitle(tag) : null;
+      return tag ? { name: humanize(getTitle(tag)), icon: tag.icon ?? '' } : null;
     })
-    .filter(Boolean) as string[];
-}
-
-function getIcon(r: NormalizedRecord): string {
-  return r.icon ?? '';
+    .filter(Boolean) as TagRef[];
 }
 
 function getCaseStudy(r: NormalizedRecord): string {
@@ -88,15 +88,14 @@ const rows = records.map((r) => {
     place: getPlace(r),
     description: getDescription(r),
     url: getUrl(r),
-    icon: getIcon(r),
-    tags: getTagNames(r),
+    tags: getTags(r),
     caseStudy: getCaseStudy(r),
     record: r,
   };
 });
 
 const categories = Array.from(new Set(rows.map((r) => r.type).filter(Boolean))).sort();
-const allTags = Array.from(new Set(rows.flatMap((r) => r.tags))).sort();
+const allTags = Array.from(new Set(rows.flatMap((r) => r.tags.map((t) => t.name)))).sort();
 const hasLookups = Object.keys(lookups).length > 0;
 
 const caseStudyOptions = [
@@ -150,7 +149,6 @@ const caseStudyOptions = [
     <table style="width:100%;border-collapse:collapse;font-size:0.9rem;table-layout:fixed;">
       <thead>
         <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
-          <th style="width:40px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Icon</th>
           <th style="width:16%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Name</th>
           <th style="width:48px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Website</th>
           <th style="width:55%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Description</th>
@@ -169,13 +167,12 @@ const caseStudyOptions = [
             data-description={r.description.toLowerCase()}
             data-place={r.place.toLowerCase()}
             data-category={r.type}
-            data-tags={r.tags.join('|')}
+            data-tags={r.tags.map((t) => t.name).join('|')}
             data-case-study={r.caseStudy === 'Y' ? 'Y' : 'N'}
             style="border-bottom:1px solid var(--border);cursor:pointer;overflow:hidden;"
             onmouseenter="this.style.background='var(--surface)'"
             onmouseleave="this.style.background=''"
           >
-            <td style="padding:0.6rem 1rem;font-size:1.1rem;line-height:1;overflow:hidden;vertical-align:top;">{r.icon}</td>
             <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top;">{r.name}</td>
             <td style="padding:0.6rem 1rem;overflow:hidden;vertical-align:top;">
               {r.url ? (
@@ -203,12 +200,10 @@ const caseStudyOptions = [
               {r.tags.length > 0 ? (
                 <div style="display:flex;flex-wrap:wrap;gap:0.2rem;max-width:100%;overflow:hidden;">
                   {r.tags.slice(0, 2).map((tag) => (
-                    <span style="font-size:0.65rem;padding:0.12rem 0.35rem;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-fg);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;overflow:hidden;text-overflow:ellipsis;max-width:100%;">
-                      {tag}
-                    </span>
+                    <Badge size="sm" shape="square" icon={tag.icon}>{tag.name}</Badge>
                   ))}
                   {r.tags.length > 2 && (
-                    <span style="font-size:0.65rem;padding:0.12rem 0.35rem;border-radius:var(--radius-pill);background:var(--surface);color:var(--muted);border:1px solid var(--border);font-family:var(--mono);white-space:nowrap;">+{r.tags.length - 2}</span>
+                    <Badge size="sm" shape="square">+{r.tags.length - 2}</Badge>
                   )}
                 </div>
               ) : (

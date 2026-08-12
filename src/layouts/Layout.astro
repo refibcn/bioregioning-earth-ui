@@ -8,6 +8,19 @@ const { title, description, hideFooter = false } = Astro.props;
 const siteTitle = 'Bioregioning Earth';
 const pageTitle = title ? `${title} — ${siteTitle}` : siteTitle;
 const base = import.meta.env.BASE_URL;
+
+// Active-page highlighting (Work Item B) — computed here via route-prefix matching rather than
+// threading a `current` prop through every page (refibcn's Nav.astro pattern): the
+// "Organizations" link points at `/`, not `/organizations`, so prefix-matching is needed
+// either way, and doing it once here avoids touching ~6 page files for the same result.
+const path = Astro.url.pathname.replace(base, '/').replace(/\/+/g, '/');
+const navItems = [
+  { href: `${base}/`, label: 'Organizations', match: (p: string) => p === '/' || p.startsWith('/organizations') },
+  { href: `${base}/ontology`, label: 'Ontology', match: (p: string) => p.startsWith('/ontology') },
+  { href: `${base}/sources`, label: 'Sources', match: (p: string) => p.startsWith('/sources') },
+  { href: `${base}/how-to-explore`, label: 'How to Explore', match: (p: string) => p.startsWith('/how-to-explore') },
+  { href: `${base}/about`, label: 'About', match: (p: string) => p.startsWith('/about') },
+];
 ---
 
 <!DOCTYPE html>
@@ -35,12 +48,21 @@ const base = import.meta.env.BASE_URL;
         --paper-200: #DDD7CF;  /* unchanged — already ~equal to refibcn's --border-subtle rendered on paper */
         --paper-700: color-mix(in srgb, var(--paper-900) 65%, var(--paper-50) 35%); /* was a fixed #41312A (too dark to read as "muted"); now derived the same way refibcn derives --rule/--text-muted, so it tracks --paper-900/50 automatically */
         --paper-900: #221a12;  /* was #2A1810 — refibcn's --umber */
+        --umber: var(--paper-900); /* alias for parity with refibcn's naming (2026-08-12 design-alignment pass) — prefer this in new code, --paper-900 stays valid for existing call sites */
 
         --terracotta: #D12B00; /* refibcn's brand primary anchor (2026-08-07) — didn't exist here before */
 
         --pillar-neural-1: #4DEFFF; --pillar-neural-4: #0055FF; --pillar-neural-6: #000FA0;
         --pillar-tissue-1: #D9FF4A; --pillar-tissue-4: #6DBF23; --pillar-tissue-6: #2C5A0D;
         --pillar-flow-1: #FFBB26;   --pillar-flow-4: #FF5500;   --pillar-flow-6: #8A2200;
+
+        /* Categorical tones (2026-08-12) — for badges that need color but aren't pillar-tagged
+           (org type/category). Deliberately NOT drawn from the pillar families (lime/cyan/orange)
+           so a category badge never reads as a pillar badge. Same Color Library refibcn.github.io
+           uses, Purple/Pink/Blue families this time, at the same Soft/Dark/Shade steps. */
+        --tone-purple-1: #CE7AFF; --tone-purple-4: #750FCC; --tone-purple-6: #3D0870;
+        --tone-pink-1: #FF5FB8;   --tone-pink-4: #C40074;   --tone-pink-6: #6E0040;
+        --tone-blue-1: #8F97FF;   --tone-blue-4: #3A3AC0;   --tone-blue-6: #1F1D80;
 
         --bg: var(--paper-50);
         --surface: var(--paper-100);
@@ -83,22 +105,25 @@ const base = import.meta.env.BASE_URL;
       a { color: var(--primary); text-decoration: none; }
       a:hover { text-decoration: underline; }
       ::selection { background: var(--accent); color: var(--fg); }
+
+      /* Nav active-state (Work Item B) — matches refibcn.github.io's Nav.astro treatment:
+         color shift to umber + a bottom border, no weight change. Active and hover read the
+         same, same as the source-of-truth pattern. */
+      .nav-link { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 2px; }
+      .nav-link:hover, .nav-link.active { color: var(--umber); border-bottom-color: var(--umber); text-decoration: none; }
     </style>
   </head>
   <body>
     <nav style="position:sticky;top:0;z-index:50;background:rgba(245,245,245,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);">
       <div style="width:100%;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:48px;gap:1rem;">
-        <a href={`${base}/`} style="font-weight:600;font-size:0.95rem;color:var(--fg);white-space:nowrap;font-family:var(--sans);">🌱 {siteTitle}</a>
+        <a href={`${base}/`} style="font-weight:500;font-size:0.95rem;color:var(--fg);white-space:nowrap;font-family:var(--sans);">{siteTitle}</a>
         <div style="display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:flex-end;align-items:center;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">
-          <a href={`${base}/`} style="color:var(--muted);">Organizations</a>
-          <span style="color:var(--border);font-size:0.9rem;">·</span>
-          <a href={`${base}/ontology`} style="color:var(--muted);">Ontology</a>
-          <span style="color:var(--border);font-size:0.9rem;">·</span>
-          <a href={`${base}/sources`} style="color:var(--muted);">Sources</a>
-          <span style="color:var(--border);font-size:0.9rem;">·</span>
-          <a href={`${base}/how-to-explore`} style="color:var(--muted);">How to Explore</a>
-          <span style="color:var(--border);font-size:0.9rem;">·</span>
-          <a href={`${base}/about`} style="color:var(--muted);">About</a>
+          {navItems.map((item, i) => (
+            <>
+              <a href={item.href} class:list={['nav-link', { active: item.match(path) }]}>{item.label}</a>
+              {i < navItems.length - 1 && <span style="color:var(--border);font-size:0.9rem;">·</span>}
+            </>
+          ))}
         </div>
       </div>
     </nav>

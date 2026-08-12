@@ -1,4 +1,6 @@
 ---
+import Badge from './Badge.astro';
+
 export interface Props {
   id: string;
   title: string;
@@ -25,12 +27,10 @@ const href = `${base}${cleanBasePath}/${slug}`;
   {subtitle && <p style="margin:0 0 0.75rem 0;font-size:0.875rem;color:var(--muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{subtitle}</p>}
   <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.5rem;">
     {tags.slice(0, 4).map((t) => (
-      <span style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-fg);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">
-        {t}
-      </span>
+      <Badge size="sm" shape="square">{t}</Badge>
     ))}
     {tags.length > 4 && (
-      <span style="font-size:0.75rem;padding:0.2rem 0.6rem;border-radius:var(--radius-pill);background:var(--surface);color:var(--muted);border:1px solid var(--border);font-family:var(--mono);">+{tags.length - 4}</span>
+      <Badge size="sm" shape="square">+{tags.length - 4}</Badge>
     )}
   </div>
   {url && (

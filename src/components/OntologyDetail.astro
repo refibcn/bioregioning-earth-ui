@@ -1,6 +1,7 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
-import { getTitle, getDescription } from '../lib/notion';
+import { getTitle, getDescription, humanize } from '../lib/notion';
+import Badge from './Badge.astro';
 
 function getSourceIcon(src: NormalizedRecord) {
   const type = String(src.properties['Source type'] ?? src.properties['source type'] ?? '').toLowerCase();
@@ -29,7 +30,7 @@ export interface Props {
 const { record, base = '', children = [], pageContent = '', lookups = {}, mode = 'page', fullPageHref } = Astro.props;
 
 const isPanel = mode === 'panel';
-const title = getTitle(record);
+const title = humanize(getTitle(record));
 const description = getDescription(record);
 
 function slugFor(id: string): string {
@@ -79,17 +80,9 @@ const sectionHeadingSize = '1.25rem';
   {children.length > 0 && (
     <div style="margin-bottom:1.5rem;">
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Ontology</h3>
-      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
         {children.map((child) => (
-          <div style="padding:0.85rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-            <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.25rem;">
-              <span style="font-size:1.2rem;line-height:1;flex-shrink:0;">{child.icon || '•'}</span>
-              <h4 style="margin:0;font-size:0.95rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(child)}</h4>
-            </div>
-            {child.properties['Description'] && (
-              <p style="margin:0.25rem 0 0 0;font-size:0.85rem;color:var(--muted);line-height:1.5;">{String(child.properties['Description'])}</p>
-            )}
-          </div>
+          <Badge shape="square" icon={child.icon}>{humanize(getTitle(child))}</Badge>
         ))}
       </div>
     </div>
@@ -119,10 +112,7 @@ const sectionHeadingSize = '1.25rem';
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Organizations</h3>
       <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
         {relatedOrganizations.map((org) => (
-          <a href={`${base}/organizations/${slugFor(org.id)}`} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);text-decoration:none;font-size:0.85rem;">
-            <span>{org.icon || '🌱'}</span>
-            <span style="word-break:break-word;overflow-wrap:anywhere;">{getTitle(org)}</span>
-          </a>
+          <Badge href={`${base}/organizations/${slugFor(org.id)}`}>{getTitle(org)}</Badge>
         ))}
       </div>
     </div>
@@ -145,9 +135,8 @@ const sectionHeadingSize = '1.25rem';
               const sourceType = String(src.properties['Source type'] ?? src.properties['source type'] ?? '');
               return (
                 <tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:0.5rem 1rem;color:var(--muted);white-space:nowrap;">
-                    <span style="margin-right:0.35rem;">{getSourceIcon(src)}</span>
-                    <span style="font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">{sourceType}</span>
+                  <td style="padding:0.5rem 1rem;white-space:nowrap;">
+                    <Badge size="sm" icon={getSourceIcon(src)}>{sourceType}</Badge>
                   </td>
                   <td style="padding:0.5rem 1rem;color:var(--fg);font-weight:500;">{getTitle(src)}</td>
                   <td style="padding:0.5rem 1rem;">

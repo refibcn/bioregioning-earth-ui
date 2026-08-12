@@ -193,6 +193,29 @@ export function getTitle(record: NormalizedRecord): string {
   return String(record.properties['Name'] ?? record.properties['Title'] ?? record.properties['name'] ?? record.properties['title'] ?? 'Untitled');
 }
 
+// Ontology/tag titles are stored Snake_Case (e.g. "Watershed_Repair") — display them as
+// "Watershed Repair" everywhere they show up as a badge label. Underscores only; doesn't
+// otherwise reformat casing, since some titles are already mixed-case on purpose.
+export function humanize(text: string): string {
+  return text.replace(/_/g, ' ');
+}
+
+// Org type/category badges get color (2026-08-12) — purple/pink/blue, deliberately not the pillar
+// colors, so a category badge never reads as a pillar badge. Category values are open-ended
+// (Notion-driven, not a fixed enum), so instead of a hand-curated lookup this hashes the string to
+// one of the three tones — same category always gets the same color, without needing to know the
+// full set of values in advance.
+const CATEGORY_TONES = ['purple', 'pink', 'blue'] as const;
+export type CategoryTone = (typeof CATEGORY_TONES)[number];
+
+export function toneForCategory(category: string): CategoryTone {
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = (hash * 31 + category.charCodeAt(i)) | 0;
+  }
+  return CATEGORY_TONES[Math.abs(hash) % CATEGORY_TONES.length];
+}
+
 export function getDescription(record: NormalizedRecord): string {
   return String(record.properties['Description'] ?? record.properties['description'] ?? '');
 }

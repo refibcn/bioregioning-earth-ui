@@ -1,6 +1,8 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
+import { humanize } from '../lib/notion';
 import OntologyDetail from './OntologyDetail.astro';
+import Badge from './Badge.astro';
 
 export interface Props {
   records: NormalizedRecord[];
@@ -115,7 +117,7 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
           <div class="ontology-parent-card" data-id={parent.id} style="padding:1.25rem 1.5rem;background:var(--surface);border-bottom:1px solid var(--border);cursor:pointer;">
             <div style="display:flex;align-items:center;gap:0.75rem;">
               <span style="font-size:1.6rem;line-height:1;flex-shrink:0;">{getIcon(parent)}</span>
-              <h2 style="margin:0;font-size:1.25rem;font-weight:600;font-family:var(--sans);letter-spacing:-0.01em;word-break:break-word;overflow-wrap:anywhere;">{getTitle(parent)}</h2>
+              <h2 style="margin:0;font-size:1.25rem;font-weight:600;font-family:var(--sans);letter-spacing:-0.01em;word-break:break-word;overflow-wrap:anywhere;">{humanize(getTitle(parent))}</h2>
             </div>
             {getDescription(parent) && (
               <p style="margin:0.5rem 0 0 0;color:var(--muted);font-size:0.9rem;line-height:1.5;">{getDescription(parent)}</p>
@@ -124,14 +126,9 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
 
           {children.length > 0 && (
             <div style="padding:1.25rem 1.5rem;">
-              <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:0.75rem;">
+              <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
                 {children.map((child) => (
-                  <div style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.85rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-                    <span style="font-size:1.2rem;line-height:1;flex-shrink:0;">{getIcon(child)}</span>
-                    <div style="min-width:0;">
-                      <h3 style="margin:0;font-size:0.9rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(child)}</h3>
-                    </div>
-                  </div>
+                  <Badge shape="square" icon={getIcon(child)}>{humanize(getTitle(child))}</Badge>
                 ))}
               </div>
             </div>

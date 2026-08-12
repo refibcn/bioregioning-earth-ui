@@ -6,6 +6,7 @@ import SourcesTable from '../../components/SourcesTable.astro';
 import OrganizationsGallery from '../../components/OrganizationsGallery.astro';
 import EarthMap from '../../components/EarthMap.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, fetchPageBlocks, renderBlocksToHtml, buildRecordMap } from '../../lib/notion';
+import { hasCoords } from '../../lib/geo';
 
 export async function getStaticPaths() {
   const sections = loadSectionConfig();
@@ -18,24 +19,6 @@ export async function getStaticPaths() {
 const { section } = Astro.props;
 const records = await fetchSectionRecords(section);
 const base = import.meta.env.BASE_URL;
-
-function hasCoords(props: Record<string, any>): boolean {
-  for (const key of Object.keys(props)) {
-    const val = props[key];
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
-      const lat = val.latitude != null ? Number(val.latitude) : val.lat != null ? Number(val.lat) : null;
-      const lng = val.longitude != null ? Number(val.longitude) : val.lon != null ? Number(val.lon) : null;
-      if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) return true;
-    }
-  }
-  const lat = Number(
-    props['Lat'] ?? props['lat'] ?? props['Latitude'] ?? props['latitude'] ?? props['location_lat'] ?? props['location_Lat'] ?? props['Location_Lat']
-  );
-  const lng = Number(
-    props['Lng'] ?? props['lng'] ?? props['Longitude'] ?? props['longitude'] ?? props['location_lng'] ?? props['location_Lng'] ?? props['Location_Lng']
-  );
-  return !isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0);
-}
 
 const isOrgs = section.id === 'bioregional-organizations';
 const isOntology = section.id === 'ontology';
@@ -105,7 +88,7 @@ const hasMapData = records.some((r) => hasCoords(r.properties));
 
     {hasMapData && (
       <section style="margin-bottom:2.5rem;">
-        <EarthMap records={records} basePath={section.route} />
+        <EarthMap records={records} basePath={section.route} lookups={lookups} />
       </section>
     )}
 

@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import HomeEarthMap from '../components/HomeEarthMap.astro';
 import OrganizationsGallery from '../components/OrganizationsGallery.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, buildRecordMap } from '../lib/notion';
+import { splitParentsAndChildren } from '../lib/ontology';
 
 const sections = loadSectionConfig();
 const related = loadRelatedDatabases();
@@ -39,18 +40,21 @@ const lookups = {
   affiliations: buildRecordMap(orgRecords),
 };
 const tagMap = buildRecordMap(allOntology);
+const { parents: themes } = splitParentsAndChildren(allOntology);
 ---
 
 <Layout title="Dashboard" description="Explore bioregional actors, projects, and opportunities" hideFooter={true}>
   <main style="padding:0;max-width:none;height:calc(100vh - 48px);position:relative;">
-    <!-- Floating view toggle -->
+    <!-- Floating view toggle. Square + umber per the lab's flat-control convention (was
+         rounded + terracotta); position is view-dependent — bottom-left in map view (unchanged),
+         top-left aligned with the gallery filters bar in gallery view (Work Item D). -->
     <div
       id="view-toggle"
-      style="position:absolute;bottom:1rem;left:1rem;z-index:30;display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);"
+      style="position:absolute;bottom:1rem;top:auto;left:1rem;z-index:30;display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);"
     >
       <button
         data-view="map"
-        style="padding:0.55rem 1rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--primary);color:var(--primary-fg);border:none;cursor:pointer;font-weight:500;"
+        style="padding:0.55rem 1rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:#FFFFFF;border:none;cursor:pointer;font-weight:500;"
       >
         🗺️ Map
       </button>
@@ -64,11 +68,11 @@ const tagMap = buildRecordMap(allOntology);
 
     <!-- Map view -->
     <div id="map-view" style="width:100%;height:100%;">
-      <HomeEarthMap records={mapMarkers} orgCount={orgCount} orgDescription={orgDescription} lookups={lookups} />
+      <HomeEarthMap records={mapMarkers} orgCount={orgCount} orgDescription={orgDescription} lookups={lookups} themes={themes} />
     </div>
 
     <!-- Gallery view -->
-    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:4rem 1.5rem 1.5rem 1.5rem;box-sizing:border-box;">
+    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:3.25rem 1.5rem 1.5rem 1.5rem;box-sizing:border-box;">
       <div style="max-width:var(--max-w);margin:0 auto;">
         <OrganizationsGallery records={orgRecords} tagMap={tagMap} showHeader={false} orgCount={orgCount} orgDescription={orgDescription} />
       </div>
@@ -80,6 +84,7 @@ const tagMap = buildRecordMap(allOntology);
       const mapView = document.getElementById('map-view');
       const galleryView = document.getElementById('gallery-view');
       const buttons = document.querySelectorAll('#view-toggle button');
+      const toggle = document.getElementById('view-toggle');
 
       if (!mapView || !galleryView) return;
 
@@ -92,13 +97,28 @@ const tagMap = buildRecordMap(allOntology);
         window.dispatchEvent(new CustomEvent('view-changed', { detail: { view } }));
       }
 
+      if (toggle) {
+        if (view === 'gallery') {
+          toggle.style.top = '1rem';
+          toggle.style.bottom = 'auto';
+          toggle.style.left = '1.5rem';
+        } else {
+          toggle.style.top = 'auto';
+          toggle.style.bottom = '1rem';
+          toggle.style.left = '1rem';
+        }
+      }
+
       buttons.forEach((btn) => {
         const isActive = btn.dataset.view === view;
-        btn.style.background = isActive ? 'var(--primary)' : 'var(--card)';
-        btn.style.color = isActive ? 'var(--primary-fg)' : 'var(--muted)';
+        btn.style.background = isActive ? 'var(--umber)' : 'var(--card)';
+        btn.style.color = isActive ? '#FFFFFF' : 'var(--muted)';
         btn.style.fontWeight = isActive ? '500' : '400';
       });
     }
+    // Work Item E: exposed so HomeEarthMap.astro's welcome-sidebar theme badges can switch to
+    // gallery view before dispatching the gallery-filter-tag event.
+    window.__beSetView = setView;
 
     function readHash() {
       return window.location.hash === '#gallery' ? 'gallery' : 'map';

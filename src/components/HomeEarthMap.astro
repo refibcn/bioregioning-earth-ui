@@ -1,6 +1,9 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
+import { toneForCategory } from '../lib/notion';
+import { getCoords } from '../lib/geo';
 import OrgDetail from './OrgDetail.astro';
+import Badge from './Badge.astro';
 
 export interface Props {
   records?: Array<{
@@ -18,77 +21,76 @@ export interface Props {
     sources?: Map<string, NormalizedRecord>;
     affiliations?: Map<string, NormalizedRecord>;
   };
+  themes?: NormalizedRecord[];
 }
-const { records = [], basePath = '/', orgCount = 0, orgDescription = '', lookups = {} } = Astro.props;
+const { records = [], basePath = '/', orgCount = 0, orgDescription = '', lookups = {}, themes = [] } = Astro.props;
 const base = import.meta.env.BASE_URL;
 
-function getCoords(props: Record<string, any>): { lat: number; lng: number } | null {
-  for (const key of Object.keys(props)) {
-    const val = props[key];
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
-      const lat = val.latitude != null ? Number(val.latitude) : val.lat != null ? Number(val.lat) : null;
-      const lng = val.longitude != null ? Number(val.longitude) : val.lon != null ? Number(val.lon) : null;
-      if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
-        return { lat, lng };
-      }
-    }
-  }
-  const lat = Number(
-    props['Lat'] ?? props['lat'] ?? props['Latitude'] ?? props['latitude'] ??
-    props['location_lat'] ?? props['location_Lat'] ?? props['Location_Lat']
-  );
-  const lng = Number(
-    props['Lng'] ?? props['lng'] ?? props['Longitude'] ?? props['longitude'] ??
-    props['location_lng'] ?? props['location_Lng'] ?? props['Location_Lng']
-  );
-  if (!isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0)) return { lat, lng };
-  return null;
+function getTagNames(props: Record<string, any>): Array<{ name: string; icon?: string }> {
+  const ids: string[] = Array.isArray(props['Tags']) ? props['Tags'] : [];
+  return ids
+    .map((id) => lookups.tags?.get(id))
+    .filter(Boolean)
+    .map((t) => ({ name: String(t!.properties['Name'] ?? t!.properties['Title'] ?? 'Untitled').replace(/_/g, ' '), icon: t!.icon }));
 }
 
-const markers = records
-  .map((r) => {
-    const coords = getCoords(r.properties);
-    if (!coords) return null;
-    const name = String(r.properties['Name'] ?? r.properties['Title'] ?? 'Untitled');
-    const slug = r.id.replace(/-/g, '');
-    const pathPrefix = r.sectionRoute ? r.sectionRoute.replace(/\/$/, '') : basePath.replace(/\/$/, '');
-    const href = `${base}${pathPrefix}/${slug}`;
-    const caseStudy = r.properties['Case Study'] ?? null;
-    const place = String(
-      r.properties['Place']?.address ??
-      r.properties['Place']?.name ??
-      r.properties['Place'] ??
-      r.properties['Scope'] ??
-      r.properties['scope'] ??
-      r.properties['Location'] ??
-      r.properties['location'] ??
-      ''
-    );
-    const category = String(
-      r.properties['Category'] ??
-      r.properties['category'] ??
-      r.properties['Type'] ??
-      r.properties['type'] ??
-      ''
-    );
-    return {
-      id: r.id,
-      lat: coords.lat,
-      lng: coords.lng,
-      name,
-      href,
-      caseStudy,
-      place,
-      category,
-    };
-  })
-  .filter(Boolean) as Array<{ id: string; lat: number; lng: number; name: string; href: string; caseStudy: string | null; place: string; category: string }>;
+const markerResults = records.map((r) => {
+  const coords = getCoords(r.properties);
+  if (!coords) return { record: r, marker: null };
+  const name = String(r.properties['Name'] ?? r.properties['Title'] ?? 'Untitled');
+  const slug = r.id.replace(/-/g, '');
+  const pathPrefix = r.sectionRoute ? r.sectionRoute.replace(/\/$/, '') : basePath.replace(/\/$/, '');
+  const href = `${base}${pathPrefix}/${slug}`;
+  const caseStudy = r.properties['Case Study'] ?? null;
+  const place = String(
+    r.properties['Place']?.address ??
+    r.properties['Place']?.name ??
+    r.properties['Place'] ??
+    r.properties['Scope'] ??
+    r.properties['scope'] ??
+    r.properties['Location'] ??
+    r.properties['location'] ??
+    ''
+  );
+  const category = String(
+    r.properties['Category'] ??
+    r.properties['category'] ??
+    r.properties['Type'] ??
+    r.properties['type'] ??
+    ''
+  );
+  const tags = getTagNames(r.properties).slice(0, 4);
+  const categoryTone = category ? toneForCategory(category) : 'neutral';
+  return {
+    record: r,
+    marker: { id: r.id, lat: coords.lat, lng: coords.lng, name, href, caseStudy, place, category, categoryTone, tags },
+  };
+});
+
+const markers = markerResults.map((m) => m.marker).filter(Boolean) as Array<{
+  id: string; lat: number; lng: number; name: string; href: string; caseStudy: string | null; place: string; category: string; categoryTone: string; tags: Array<{ name: string; icon?: string }>;
+}>;
+
+// Work Item A: see EarthMap.astro for the full explanation — same diagnostic here since this
+// component builds its own independent marker list for the home page.
+const missingCoordsRecords = markerResults.filter((m) => m.marker === null).map((m) => m.record);
+if (missingCoordsRecords.length > 0) {
+  const names = missingCoordsRecords.map((r) => String(r.properties['Name'] ?? r.properties['Title'] ?? r.id)).join(', ');
+  console.warn(`[geo] ${missingCoordsRecords.length} record(s) missing coordinates, not shown on map: ${names}`);
+}
 
 const hasLookups = Object.keys(lookups).length > 0;
+const themeCount = themes.length;
 ---
 
 <div style="position:relative;width:100%;height:100%;overflow:hidden;">
   <div id="home-map" style="width:100%;height:100%;" data-markers={JSON.stringify(markers)} data-base={base}></div>
+
+  {missingCoordsRecords.length > 0 && (
+    <div style="position:absolute;bottom:0.5rem;left:0.5rem;z-index:15;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
+      {missingCoordsRecords.length} organization{missingCoordsRecords.length === 1 ? '' : 's'} not shown (missing coordinates)
+    </div>
+  )}
 
   <!-- Side panel -->
   <div
@@ -108,10 +110,18 @@ const hasLookups = Object.keys(lookups).length > 0;
       <div id="panel-welcome">
         <h1 style="font-size:clamp(1.5rem, 2.5vw, 2rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);letter-spacing:-0.01em;line-height:1.2;">Welcome to the Bioregional Knowledge Commons</h1>
         <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.9rem;line-height:1.55;">This is a public knowledge base documenting organizations and practices at the frontier of bioregional work — exploring how communities around the world are learning to live and govern within the logic of place.</p>
-        <p style="color:var(--muted);margin:0 0 1rem 0;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
-          <strong style="color:var(--fg);">{orgCount}</strong> {orgDescription}
+        <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
+          <strong style="color:var(--fg);">{orgCount}</strong> bioregional actors and initiatives currently mapped{themeCount > 0 && <> across <strong style="color:var(--fg);">{themeCount}</strong> themes:</>}
         </p>
-
+        {themeCount > 0 && (
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;">
+            {themes.map((theme) => (
+              <Badge shape="square" size="sm" icon={theme.icon} data-theme-filter={String(theme.properties['Name'] ?? theme.properties['Title'] ?? '').replace(/_/g, ' ')} class="theme-filter-badge">
+                {String(theme.properties['Name'] ?? theme.properties['Title'] ?? '').replace(/_/g, ' ')}
+              </Badge>
+            ))}
+          </div>
+        )}
 
       </div>
 
@@ -138,6 +148,8 @@ const hasLookups = Object.keys(lookups).length > 0;
     border-top-color: var(--card);
     border-bottom-color: var(--card);
   }
+  .theme-filter-badge { cursor: pointer; }
+  .theme-filter-badge:hover { filter: brightness(0.95); }
 </style>
 
 {hasLookups && (
@@ -270,8 +282,11 @@ const hasLookups = Object.keys(lookups).length > 0;
           anchor: 'bottom',
         }).setHTML(`
           <div style="padding:0.5rem 0.65rem;font-family:var(--sans);max-width:240px;">
-            <div style="font-weight:600;font-size:0.9rem;color:var(--fg);margin-bottom:0.3rem;line-height:1.3;">${m.name}</div>
-            ${m.category ? `<div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:0.3rem;">${m.category}</div>` : ''}
+            <div style="font-weight:600;font-size:1rem;color:var(--fg);margin-bottom:0.35rem;line-height:1.3;">${m.name}</div>
+            ${m.category || (m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.35rem;">
+              ${m.category ? `<span class="badge badge--sm badge--pill badge--${m.categoryTone}">${m.category}</span>` : ''}
+              ${(m.tags || []).map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
+            </div>` : ''}
             ${m.place ? `<div style="font-size:0.8rem;color:var(--fg);line-height:1.4;">${m.place}</div>` : ''}
           </div>
         `);
@@ -311,5 +326,24 @@ const hasLookups = Object.keys(lookups).length > 0;
     initMap();
   } else {
     window.addEventListener('load', initMap);
+  }
+
+  // Work Item E: welcome-sidebar theme badges switch to gallery view and pre-filter it by that
+  // theme, reusing the gallery's existing tag <select> + applyFilters() rather than inventing a
+  // second filtering mechanism. index.astro exposes setView() as window.__beSetView.
+  function wireThemeBadges() {
+    document.querySelectorAll('.theme-filter-badge').forEach((badge) => {
+      badge.addEventListener('click', () => {
+        const tag = badge.getAttribute('data-theme-filter');
+        if (!tag) return;
+        window.__beSetView?.('gallery');
+        window.dispatchEvent(new CustomEvent('gallery-filter-tag', { detail: { tag } }));
+      });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireThemeBadges);
+  } else {
+    wireThemeBadges();
   }
 </script>

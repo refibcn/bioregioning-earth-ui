@@ -1,0 +1,81 @@
+---
+// Badge.astro — the unified badge/pill, ported from refibcn.github.io's /lab/badges proposal
+// (2026-08-12). Ported as neutral-only at first — this site doesn't have refibcn's pillar/status
+// color system — then added purple/pink/blue "categorical" tones for org type specifically
+// (2026-08-12b), deliberately not the pillar colors so a category badge never reads as a pillar
+// badge. Replaces what used to be: accent-tinted pills (tag lists), a rounded-rect surface badge
+// (org category), unstyled plain text (source type, map sidebar type/scope), and rounded-rect
+// link chips (ontology related-orgs) — four different shapes for what's conceptually the same
+// element.
+export interface Props {
+  size?: "sm" | "md" | "lg";
+  shape?: "pill" | "square"; // square is for themes/tags specifically; everything else stays pill
+  tone?: "neutral" | "purple" | "pink" | "blue"; // purple/pink/blue are for org type only for now
+  icon?: string;   // leading emoji — takes precedence over dot if both given
+  dot?: boolean;
+  href?: string;   // renders <a> instead of <span> when the badge is itself a link
+  class?: string;  // extra class(es) appended after the badge's own — e.g. a hook for a click listener
+  [key: `data-${string}`]: string | undefined; // passthrough data-* attributes, e.g. for click-to-filter wiring
+}
+const { size = "md", shape = "pill", tone = "neutral", icon, dot = false, href, class: extraClass, ...rest } = Astro.props;
+const Tag = href ? "a" : "span";
+const dataAttrs = Object.fromEntries(Object.entries(rest).filter(([k]) => k.startsWith("data-")));
+---
+<Tag class={`badge badge--${size} badge--${shape} badge--${tone}${extraClass ? ` ${extraClass}` : ""}`} href={href} {...dataAttrs}>
+  {icon ? <span class="badge__icon" aria-hidden="true">{icon}</span> : dot && <span class="badge__dot" aria-hidden="true" />}
+  <slot />
+</Tag>
+
+<style is:global>
+  /* Global (not scoped): map hover popups build badge markup as raw HTML strings inside
+     client-side <script> blocks (MapLibre popups can't render Astro components), and Astro's
+     scoped-style hashing wouldn't reach those strings. Class names are specific enough
+     (.badge/.badge--sm/.badge--pill/etc.) that global scope is low-risk. */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    border: 1px solid;
+    padding: 0.3em 0.75em;
+    text-decoration: none;
+  }
+  a.badge:hover { filter: brightness(0.97); }
+
+  /* Same formula for every tone: a light tint of the tone's own color as background, its dark
+     step as text, its mid step (reduced opacity) as border. */
+  .badge--neutral { background: var(--surface); color: var(--fg); border-color: var(--border); }
+  .badge--purple {
+    color: var(--tone-purple-6);
+    border-color: color-mix(in srgb, var(--tone-purple-4) 55%, transparent);
+    background: color-mix(in srgb, var(--tone-purple-1) 40%, var(--paper-50));
+  }
+  .badge--pink {
+    color: var(--tone-pink-6);
+    border-color: color-mix(in srgb, var(--tone-pink-4) 55%, transparent);
+    background: color-mix(in srgb, var(--tone-pink-1) 40%, var(--paper-50));
+  }
+  .badge--blue {
+    color: var(--tone-blue-6);
+    border-color: color-mix(in srgb, var(--tone-blue-4) 55%, transparent);
+    background: color-mix(in srgb, var(--tone-blue-1) 40%, var(--paper-50));
+  }
+
+  .badge--sm { font-size: 0.7rem; padding: 0.2em 0.6em; }
+  .badge--md { font-size: 0.8rem; }
+  .badge--lg { font-size: 0.9rem; padding: 0.35em 0.85em; }
+
+  /* Pill (default) — fully round. Square — rounded corners short of a full pill, for themes/tags,
+     where a page often shows many in a row and a full pill per tag reads heavier than needed.
+     Matches refibcn.github.io's /lab/badges proposal exactly (radius in em, scales with size). */
+  .badge--pill { border-radius: var(--radius-pill); }
+  .badge--square { border-radius: 0.35em; }
+
+  .badge__dot { width: 0.5em; height: 0.5em; border-radius: 50%; background: currentColor; flex: none; }
+  .badge__icon { flex: none; line-height: 1; font-size: 1.1em; }
+</style>

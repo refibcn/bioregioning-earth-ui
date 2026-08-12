@@ -1,5 +1,6 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
+import Badge from './Badge.astro';
 
 export interface Props {
   records: NormalizedRecord[];
@@ -79,9 +80,8 @@ const rows = records.map((r) => {
     <tbody style="overflow:hidden;background:var(--card);">
       {rows.map((r) => (
         <tr style="border-bottom:1px solid var(--border);overflow:hidden;">
-          <td style="padding:0.6rem 1rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top;">
-            <span style="margin-right:0.35rem;">{r.emoji}</span>
-            <span style="font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">{r.type}</span>
+          <td style="padding:0.6rem 1rem;overflow:hidden;text-overflow:ellipsis;vertical-align:top;">
+            <Badge size="sm" icon={r.emoji}>{r.type}</Badge>
           </td>
           <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top;">
             <a href={r.href} style="color:var(--fg);text-decoration:none;">{r.title}</a>
@@ -95,9 +95,7 @@ const rows = records.map((r) => {
             {r.linkedOrgs.length > 0 ? (
               <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
                 {r.linkedOrgs.map((org) => (
-                  <a href={`${base}/organizations/${org.id.replace(/-/g, '')}`} style="display:inline-block;max-width:100%;font-size:0.72rem;padding:0.12rem 0.4rem;border-radius:var(--radius-pill);background:var(--surface);border:1px solid var(--border);color:var(--fg);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                    {org.icon || '•'} {getTitle(org)}
-                  </a>
+                  <Badge size="sm" href={`${base}/organizations/${org.id.replace(/-/g, '')}`}>{getTitle(org)}</Badge>
                 ))}
               </div>
             ) : (

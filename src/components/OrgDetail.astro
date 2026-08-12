@@ -1,6 +1,7 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
-import { getTitle, getDescription, getUrl, getPlace, getCategory, renderMarkdown } from '../lib/notion';
+import { getTitle, getDescription, getUrl, getPlace, getCategory, renderMarkdown, humanize, toneForCategory } from '../lib/notion';
+import Badge from './Badge.astro';
 
 function getSourceIcon(src) {
   const type = String(src.properties['Source type'] ?? src.properties['source type'] ?? '').toLowerCase();
@@ -101,14 +102,11 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
 
 <div>
   <h2 style={`font-size:clamp(1.2rem, 2.5vw, ${headingSize});font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);line-height:1.2;font-family:var(--sans);letter-spacing:-0.01em;`}>
-    {record.icon && <span style="margin-right:0.5rem;">{record.icon}</span>}
     {title}
   </h2>
 
   {category && (
-    <div style="display:inline-block;padding:0.35rem 0.65rem;border-radius:var(--radius);background:var(--surface);color:var(--fg);font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:1rem;">
-      {category}
-    </div>
+    <div style="margin-bottom:1rem;"><Badge tone={toneForCategory(category)}>{category}</Badge></div>
   )}
 
   <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
@@ -153,16 +151,10 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
         <dt style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding-top:0.15rem;font-family:var(--mono);">Network Affiliation</dt>
         <dd style="margin:0;display:flex;flex-wrap:wrap;gap:0.5rem;">
           {affiliationOrgs.map((org) => (
-            <a href={`${base}/organizations/${slugFor(org.id)}`} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);text-decoration:none;font-size:0.85rem;">
-              <span>{org.icon || '🌱'}</span>
-              <span style="word-break:break-word;overflow-wrap:anywhere;">{getTitle(org)}</span>
-            </a>
+            <Badge href={`${base}/organizations/${slugFor(org.id)}`}>{getTitle(org)}</Badge>
           ))}
           {affiliationNames.map((name) => (
-            <span style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);font-size:0.85rem;">
-              <span>🌐</span>
-              <span style="word-break:break-word;overflow-wrap:anywhere;">{name}</span>
-            </span>
+            <Badge>{name}</Badge>
           ))}
         </dd>
       </div>
@@ -172,10 +164,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
         <dt style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding-top:0.15rem;font-family:var(--mono);">Tags</dt>
         <dd style="margin:0;display:flex;flex-wrap:wrap;gap:0.5rem;">
           {tags.map((tag) => (
-            <a href={`${base}/ontology/${slugFor(tag.id)}`} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.45rem 0.75rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);text-decoration:none;font-size:0.85rem;">
-              <span>{tag.icon || '•'}</span>
-              <span style="word-break:break-word;overflow-wrap:anywhere;">{getTitle(tag)}</span>
-            </a>
+            <Badge shape="square" href={`${base}/ontology/${slugFor(tag.id)}`} icon={tag.icon}>{humanize(getTitle(tag))}</Badge>
           ))}
         </dd>
       </div>
@@ -205,9 +194,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
               {actTags.length > 0 && (
                 <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem;">
                   {actTags.map((tag) => (
-                    <span style="font-size:0.7rem;padding:0.15rem 0.5rem;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-fg);border:1px solid var(--border);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">
-                      {tag.icon || '•'} {getTitle(tag)}
-                    </span>
+                    <Badge size="sm" shape="square" icon={tag.icon}>{humanize(getTitle(tag))}</Badge>
                   ))}
                 </div>
               )}
@@ -242,9 +229,8 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
               const sourceType = String(src.properties['Source type'] ?? src.properties['source type'] ?? '');
               return (
                 <tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:0.5rem 1rem;color:var(--muted);white-space:nowrap;">
-                    <span style="margin-right:0.35rem;">{getSourceIcon(src)}</span>
-                    <span style="font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.02em;">{sourceType}</span>
+                  <td style="padding:0.5rem 1rem;white-space:nowrap;">
+                    <Badge size="sm" icon={getSourceIcon(src)}>{sourceType}</Badge>
                   </td>
                   <td style="padding:0.5rem 1rem;color:var(--fg);font-weight:500;">{getTitle(src)}</td>
                   <td style="padding:0.5rem 1rem;">
