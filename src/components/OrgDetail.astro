@@ -96,34 +96,32 @@ function slugFor(id: string): string {
   return id.replace(/-/g, '');
 }
 
-const headingSize = isPanel ? '1.15rem' : '1.25rem';
+// G4: page-mode title bumped (was 1.25rem); panel-mode kept smaller. The clamp's min used to be
+// 1.2rem — higher than panel mode's 1.15rem target, which per the CSS clamp spec (always
+// resolves to the min when min > max) meant panel titles never actually got smaller than page
+// titles. Min is now below both targets so the clamp can actually reach either one.
+const headingSize = isPanel ? '1.15rem' : '1.6rem';
 const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkdown()
 ---
 
 <div>
-  <h2 style={`font-size:clamp(1.2rem, 2.5vw, ${headingSize});font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);line-height:1.2;font-family:var(--sans);letter-spacing:-0.01em;`}>
-    {title}
-  </h2>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;margin-bottom:0.6rem;">
+    <h2 style={`font-size:clamp(1rem, 2.5vw, ${headingSize});font-weight:500;margin:0;color:var(--fg);line-height:1.2;font-family:var(--sans);letter-spacing:-0.01em;`}>
+      {title}
+    </h2>
+    {website && (
+      <a href={website} target="_blank" rel="noopener noreferrer" aria-label="Visit website" style="flex-shrink:0;font-size:1.15em;line-height:1.2;text-decoration:none;">
+        🌐
+      </a>
+    )}
+  </div>
 
   {category && (
     <div style="margin-bottom:1rem;"><Badge tone={toneForCategory(category)}>{category}</Badge></div>
   )}
 
-  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
-    {website && (
-      <a href={website} target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 0.9rem;border-radius:var(--radius);background:var(--primary);color:var(--primary-fg);font-size:0.75rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
-        🌐 Visit website
-      </a>
-    )}
-    {isPanel && fullPageHref && (
-      <a href={fullPageHref} style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 0.9rem;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--fg);font-size:0.75rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
-        → View full page
-      </a>
-    )}
-  </div>
-
   {description && (
-    <p style="font-size:0.95rem;color:var(--fg);line-height:1.6;margin:0 0 1rem 0;">{description}</p>
+    <p style="font-size:0.9rem;color:var(--fg);line-height:1.6;margin:0 0 1rem 0;">{description}</p>
   )}
 
   {context && (
@@ -179,7 +177,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
 
   {activities.length > 0 && (
     <div style="margin-bottom:1.5rem;">
-      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Activities</h3>
+      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Activities</h3>
       <div style="display:flex;flex-direction:column;gap:1rem;">
         {activities.map((act) => {
           const actTagIds: string[] = Array.isArray(act.properties['Tags']) ? act.properties['Tags'] : [];
@@ -187,10 +185,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
           const actDescription = String(act.properties['Description'] ?? act.properties['description'] ?? '');
           return (
             <div style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-              <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.4rem;">
-                <span style="font-size:1.2rem;line-height:1;flex-shrink:0;">{act.icon || '🔸'}</span>
-                <h4 style="margin:0;font-size:1rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(act)}</h4>
-              </div>
+              <h4 style="margin:0 0 0.4rem 0;font-size:1.05rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(act)}</h4>
               {actTags.length > 0 && (
                 <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem;">
                   {actTags.map((tag) => (
@@ -214,19 +209,22 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
 
   {sources.length > 0 && (
     <div style="margin-bottom:1.5rem;">
-      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Sources</h3>
+      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Sources</h3>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
         <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
           <thead>
             <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
               <th style="text-align:left;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Type</th>
               <th style="text-align:left;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Name</th>
-              <th style="text-align:left;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Full record</th>
+              <th style="text-align:left;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Source</th>
             </tr>
           </thead>
           <tbody>
             {sources.map((src) => {
               const sourceType = String(src.properties['Source type'] ?? src.properties['source type'] ?? '');
+              const externalUrl = getUrl(src);
+              const linkHref = externalUrl ?? `${base}/sources/${slugFor(src.id)}`;
+              const linkLabel = externalUrl ? 'Visit source' : 'View source record';
               return (
                 <tr style="border-bottom:1px solid var(--border);">
                   <td style="padding:0.5rem 1rem;white-space:nowrap;">
@@ -234,7 +232,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
                   </td>
                   <td style="padding:0.5rem 1rem;color:var(--fg);font-weight:500;">{getTitle(src)}</td>
                   <td style="padding:0.5rem 1rem;">
-                    <a href={`${base}/sources/${slugFor(src.id)}`} style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius);background:var(--surface);color:var(--primary);font-size:0.9rem;text-decoration:none;" aria-label="Open full record">
+                    <a href={linkHref} target={externalUrl ? '_blank' : undefined} rel={externalUrl ? 'noopener noreferrer' : undefined} style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius);background:var(--umber);color:#FFFFFF;font-size:0.9rem;text-decoration:none;" aria-label={linkLabel} title={linkLabel}>
                       ↗
                     </a>
                   </td>

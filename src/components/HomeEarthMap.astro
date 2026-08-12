@@ -95,11 +95,14 @@ const themeCount = themes.length;
   <!-- Side panel -->
   <div
     id="home-panel"
-    style="position:absolute;top:0.5rem;right:0.5rem;bottom:0.5rem;width:400px;max-width:40%;background:rgba(255,255,255,0.98);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 8px 32px rgba(42,24,16,0.12);font-family:var(--sans);z-index:20;display:flex;flex-direction:column;"
+    style="position:absolute;top:0.5rem;right:0.5rem;bottom:0.5rem;width:460px;max-width:45%;background:rgba(255,255,255,0.98);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 8px 32px rgba(42,24,16,0.12);font-family:var(--sans);z-index:20;display:flex;flex-direction:column;"
   >
-    <!-- Header -->
+    <!-- Header. G6: simplified to one nav control (Close) instead of Back+Close, with
+         "View full page" relocated here from the content row (was a filled button next to
+         "Visit website"), shown only while a detail is open. Returning to the welcome view
+         happens by clicking empty map space (already wired below), same as before. -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <button id="panel-back-btn" style="display:none;background:none;border:none;color:var(--muted);font-size:0.8rem;cursor:pointer;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;padding:0;" aria-label="Back to welcome">← Back</button>
+      <a id="panel-viewfull-link" href="#" style="display:none;color:var(--muted);font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;text-decoration:none;" aria-label="View full page">→ View full page</a>
       <button id="panel-close-btn" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:0;" aria-label="Close panel">✕</button>
     </div>
 
@@ -218,7 +221,7 @@ const themeCount = themes.length;
 
     const welcomeDiv = document.getElementById('panel-welcome');
     const detailDiv = document.getElementById('panel-detail');
-    const backBtn = document.getElementById('panel-back-btn');
+    const viewFullLink = document.getElementById('panel-viewfull-link');
     const closeBtn = document.getElementById('panel-close-btn');
     const contentDiv = document.getElementById('panel-content');
     const panel = document.getElementById('home-panel');
@@ -227,14 +230,17 @@ const themeCount = themes.length;
     function showWelcome() {
       detailDiv.style.display = 'none';
       welcomeDiv.style.display = 'block';
-      backBtn.style.display = 'none';
+      if (viewFullLink) viewFullLink.style.display = 'none';
       if (contentDiv) contentDiv.scrollTop = 0;
     }
 
     function showDetail(m) {
       openPanel();
       welcomeDiv.style.display = 'none';
-      backBtn.style.display = 'inline-block';
+      if (viewFullLink) {
+        viewFullLink.href = m.href;
+        viewFullLink.style.display = 'inline-block';
+      }
 
       if (hasLookups) {
         const template = document.getElementById(`home-detail-${m.id}`);
@@ -246,9 +252,6 @@ const themeCount = themes.length;
       } else {
         detailDiv.innerHTML = `
           <h2 style="font-size:clamp(1.3rem, 2.5vw, 1.6rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);line-height:1.2;letter-spacing:-0.01em;">${m.name}</h2>
-          <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
-            <a href="${m.href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:0.5rem 0.9rem;border-radius:var(--radius);background:var(--primary);color:var(--primary-fg);font-size:0.75rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">View full page →</a>
-          </div>
         `;
       }
       detailDiv.style.display = 'block';
@@ -263,7 +266,6 @@ const themeCount = themes.length;
       if (m) showDetail(m);
     };
 
-    backBtn?.addEventListener('click', showWelcome);
     closeBtn?.addEventListener('click', () => {
       panel.style.display = 'none';
       panelOpen = false;

@@ -114,13 +114,14 @@ if (missingCoordsRecords.length > 0) {
     </div>
   )}
 
-  <!-- Side panel -->
+  <!-- Side panel. G6: header now carries "View full page" (was a button in the content area)
+       for consistency with HomeEarthMap.astro's panel, next to Close. -->
   <div
     id="map-panel"
-    style="display:none;position:absolute;top:0.5rem;right:0.5rem;bottom:0.5rem;width:380px;max-width:calc(100% - 1rem);background:rgba(255,255,255,0.98);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);padding:0;z-index:20;overflow:hidden;box-shadow:0 8px 32px rgba(42,24,16,0.12);font-family:var(--sans);"
+    style="display:none;position:absolute;top:0.5rem;right:0.5rem;bottom:0.5rem;width:460px;max-width:calc(100% - 1rem);background:rgba(255,255,255,0.98);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);padding:0;z-index:20;overflow:hidden;box-shadow:0 8px 32px rgba(42,24,16,0.12);font-family:var(--sans);"
   >
     <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
-      <span style="font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">Detail</span>
+      <a id="map-panel-viewfull" href="#" style="display:none;color:var(--muted);font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;text-decoration:none;" aria-label="View full page">→ View full page</a>
       <button id="map-panel-close" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:0;" aria-label="Close panel">✕</button>
     </div>
     <div id="map-panel-content" style="padding:1.25rem;overflow-y:auto;height:calc(100% - 52px);"></div>
@@ -199,6 +200,7 @@ if (missingCoordsRecords.length > 0) {
     const panel = document.getElementById('map-panel');
     const panelContent = document.getElementById('map-panel-content');
     const panelClose = document.getElementById('map-panel-close');
+    const panelViewFull = document.getElementById('map-panel-viewfull');
 
     function getDescription(props) {
       return String(props['description'] ?? props['Description'] ?? props['Notes'] ?? props['notes'] ?? '');
@@ -213,18 +215,20 @@ if (missingCoordsRecords.length > 0) {
       panelContent.innerHTML = `
         <h2 style="font-size:clamp(1.4rem, 3vw, 1.8rem);font-weight:500;margin:0 0 0.75rem 0;color:var(--fg);line-height:1.2;letter-spacing:-0.01em;">${m.name}</h2>
         ${descHtml}
-        <div style="border-radius:var(--radius);border:1px solid var(--border);background:var(--card);padding:1.25rem;margin-bottom:1.25rem;">
+        <div style="border-radius:var(--radius);border:1px solid var(--border);background:var(--card);padding:1.25rem;">
           ${propsHtml}
         </div>
-        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-          <a href="${m.href}" style="display:inline-block;padding:0.55rem 1rem;border-radius:var(--radius);background:var(--primary);color:var(--primary-fg);font-size:0.8rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">View full page →</a>
-        </div>
       `;
+      if (panelViewFull) {
+        panelViewFull.href = m.href;
+        panelViewFull.style.display = 'inline-block';
+      }
       panel.style.display = 'block';
     }
 
     function hidePanel() {
       if (panel) panel.style.display = 'none';
+      if (panelViewFull) panelViewFull.style.display = 'none';
     }
 
     panelClose?.addEventListener('click', hidePanel);
