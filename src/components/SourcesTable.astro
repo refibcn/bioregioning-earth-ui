@@ -1,5 +1,6 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
+import { getUrl } from '../lib/notion';
 import Badge from './Badge.astro';
 
 export interface Props {
@@ -53,10 +54,14 @@ const rows = records.map((r) => {
     const sourceIds = org.properties['Sources'];
     return Array.isArray(sourceIds) && sourceIds.includes(r.id);
   });
+  const externalUrl = getUrl(r);
   return {
     record: r,
     slug,
     href,
+    externalUrl,
+    linkHref: externalUrl ?? href,
+    linkLabel: externalUrl ? 'Visit source' : 'View source record',
     title: getTitle(r),
     type: getSourceType(r),
     emoji: emojiForSourceType(getSourceType(r)),
@@ -70,11 +75,11 @@ const rows = records.map((r) => {
   <table style="width:100%;min-width:800px;border-collapse:collapse;font-size:0.9rem;table-layout:fixed;">
     <thead>
       <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
-        <th style="width:10%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Type</th>
-        <th style="width:18%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Name</th>
-        <th style="width:46%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Description</th>
-        <th style="width:19%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Organizations</th>
-        <th style="width:7%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Full record</th>
+        <th style="width:9%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Type</th>
+        <th style="width:16%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Name</th>
+        <th style="width:37%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Description</th>
+        <th style="width:29%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Organizations</th>
+        <th style="width:9%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Source</th>
       </tr>
     </thead>
     <tbody style="overflow:hidden;background:var(--card);">
@@ -83,7 +88,7 @@ const rows = records.map((r) => {
           <td style="padding:0.6rem 1rem;overflow:hidden;text-overflow:ellipsis;vertical-align:top;">
             <Badge size="sm" icon={r.emoji}>{r.type}</Badge>
           </td>
-          <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top;">
+          <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;overflow-wrap:anywhere;vertical-align:top;">
             <a href={r.href} style="color:var(--fg);text-decoration:none;">{r.title}</a>
           </td>
           <td style="padding:0.6rem 1rem;color:var(--muted);font-size:0.85rem;overflow:hidden;vertical-align:top;">
@@ -103,7 +108,7 @@ const rows = records.map((r) => {
             )}
           </td>
           <td style="padding:0.6rem 1rem;overflow:hidden;vertical-align:top;">
-            <a href={r.href} style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius);background:var(--surface);color:var(--primary);font-size:0.9rem;text-decoration:none;" aria-label="Open full record">
+            <a href={r.linkHref} target={r.externalUrl ? '_blank' : undefined} rel={r.externalUrl ? 'noopener noreferrer' : undefined} style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius);background:var(--umber);color:#FFFFFF;font-size:0.9rem;text-decoration:none;" aria-label={r.linkLabel} title={r.linkLabel}>
               ↗
             </a>
           </td>

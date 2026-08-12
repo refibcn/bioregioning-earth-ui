@@ -83,7 +83,9 @@ const hasMapData = records.some((r) => hasCoords(r.properties));
     <header style="margin-bottom:2rem;">
       <h1 style="font-size:clamp(1.6rem, 3.2vw, 2.2rem);font-weight:500;margin:0 0 0.5rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">{section.name}</h1>
       <p style="color:var(--muted);margin:0;font-size:1rem;max-width:640px;">{section.description}</p>
-      <p style="color:var(--muted);margin:0.75rem 0 0 0;font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">{records.length} records</p>
+      {!isSources && (
+        <p style="color:var(--muted);margin:0.75rem 0 0 0;font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">{records.length} records</p>
+      )}
     </header>
 
     {hasMapData && (
