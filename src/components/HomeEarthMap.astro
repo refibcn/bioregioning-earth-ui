@@ -255,6 +255,14 @@ const themeCount = themes.length;
       if (contentDiv) contentDiv.scrollTop = 0;
     }
 
+    // Work Item F2: exposes this map's showDetail so gallery cards (OrganizationsGallery.astro,
+    // rendered elsewhere in the same DOM on the home page) can open the same sidebar on click
+    // instead of navigating away.
+    window.__beShowDetail = (id) => {
+      const m = markers.find((x) => x.id === id);
+      if (m) showDetail(m);
+    };
+
     backBtn?.addEventListener('click', showWelcome);
     closeBtn?.addEventListener('click', () => {
       panel.style.display = 'none';
