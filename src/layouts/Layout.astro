@@ -44,6 +44,7 @@ const navItems = [
            --primary off the flow pillar onto a dedicated --terracotta, both on 2026-08-07 —
            neither change had made it here. */
         --paper-50: #fffffd;   /* was #F5F5F5 — refibcn's --paper */
+        --bone: #faf8f4;       /* refibcn's --bone — sits between --paper-50 and --paper-100/--ivory, didn't exist here before (2026-08-13) */
         --paper-100: #f8f4ed;  /* was #F1F0EE — refibcn's --ivory (surface-2) */
         --paper-200: #DDD7CF;  /* unchanged — already ~equal to refibcn's --border-subtle rendered on paper */
         --paper-700: color-mix(in srgb, var(--paper-900) 65%, var(--paper-50) 35%); /* was a fixed #41312A (too dark to read as "muted"); now derived the same way refibcn derives --rule/--text-muted, so it tracks --paper-900/50 automatically */
@@ -114,7 +115,7 @@ const navItems = [
     </style>
   </head>
   <body>
-    <nav style="position:sticky;top:0;z-index:50;background:rgba(245,245,245,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);">
+    <nav style="position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--paper-50) 92%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);">
       <div style="width:100%;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:48px;gap:1rem;">
         <a href={`${base}/`} style="font-weight:500;font-size:0.95rem;color:var(--fg);white-space:nowrap;font-family:var(--sans);">{siteTitle}</a>
         <div style="display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:flex-end;align-items:center;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">
