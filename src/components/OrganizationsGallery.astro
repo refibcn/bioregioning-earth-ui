@@ -100,13 +100,17 @@ const count = orgCount ?? cards.length;
   <!-- Toolbar row: view toggle (when present) as its own box, flush left, immediately before
        the filters bar — a real flex sibling inside this same max-width column the card grid
        uses below, so the whole row (not a viewport-fixed offset) aligns with the cards on any
-       screen width. Sticky as one row so toggle + filters bar move and stay together. -->
-  <div id="gallery-toolbar" style="position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;">
+       screen width. Not sticky — sits in normal flow at the top like everything else. No
+       wrapping border/background on the filters bar itself either: each control already has
+       its own border via .field-control, so an outer box was just a second, redundant outline
+       whose padding also pushed its contents' top edge below the toggle's. Removing it means
+       every control's own top edge sits at the same row baseline as the toggle's. -->
+  <div id="gallery-toolbar" style="display:flex;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;">
     <!-- No gap on the row itself — the toggle's own margin-right (index.astro) provides the
          gap only when it's actually docked here, so an empty anchor (toggle floating outside on
          wide screens) doesn't leave a phantom gap before the filters bar. -->
     {viewToggle && <div id="view-toggle-anchor" style="display:flex;flex-shrink:0;"></div>}
-    <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);background:var(--card);align-items:center;">
+    <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
       <input
         id="gallery-search"
         type="text"
@@ -198,9 +202,16 @@ const count = orgCount ?? cards.length;
 <style>
   /* Work Item D3: filter inputs match the lab's .field__input pattern — square, umber-toned
      border at rest, terracotta focus ring. Needs a real class (not inline style) since inline
-     styles can't express :focus-visible. */
+     styles can't express :focus-visible. Explicit height (not padding-derived) because <input>,
+     <select>, and <button> each resolve padding+line-height to a different intrinsic height per
+     their own UA defaults — measured 36/38/32px respectively before this fix — so a shared
+     height + flex centering is used instead of relying on padding to produce equal heights. */
   .field-control {
-    padding: 0.5rem 0.75rem;
+    height: 2.25rem;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.75rem;
     border: 1px solid color-mix(in srgb, var(--umber) 45%, transparent);
     border-radius: 0;
     background: var(--surface);
