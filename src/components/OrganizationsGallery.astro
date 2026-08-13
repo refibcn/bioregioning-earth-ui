@@ -330,15 +330,6 @@ const count = orgCount ?? cards.length;
       applyFilters();
     });
 
-    // Work Item E: welcome-sidebar theme badges dispatch this to pre-filter the gallery by tag.
-    window.addEventListener('gallery-filter-tag', ((e: CustomEvent) => {
-      const tag = e.detail?.tag;
-      if (!tag) return;
-      const cb = Array.from(tagCheckboxes).find((c) => (c as HTMLInputElement).value === tag) as HTMLInputElement | undefined;
-      if (cb) cb.checked = true;
-      applyFilters();
-    }) as EventListener);
-
     // Work Item F2: card click opens the shared home-panel sidebar (HomeDetailPanel.astro),
     // which lives outside #map-view/#gallery-view so it isn't hidden by the view toggle — only
     // available on the home page, where that panel is rendered. On the standalone

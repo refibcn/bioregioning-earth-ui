@@ -108,12 +108,6 @@ if (missingCoordsRecords.length > 0) {
 <div style="position:relative;width:100%;height:480px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);">
   <div id="earth-map" style="width:100%;height:100%;" data-markers={JSON.stringify(markers)}></div>
 
-  {missingCoordsRecords.length > 0 && (
-    <div style="position:absolute;bottom:0.6rem;left:3.25rem;z-index:15;padding:0.35rem 0.6rem;background:color-mix(in srgb, var(--paper-50) 92%, transparent);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
-      {missingCoordsRecords.length} organization{missingCoordsRecords.length === 1 ? '' : 's'} not shown (missing coordinates)
-    </div>
-  )}
-
   <!-- Side panel. G6: header now carries "View full page" (was a button in the content area)
        for consistency with HomeEarthMap.astro's panel, next to Close. -->
   <div
@@ -127,6 +121,14 @@ if (missingCoordsRecords.length > 0) {
     <div id="map-panel-content" style="padding:1.25rem;overflow-y:auto;height:calc(100% - 52px);"></div>
   </div>
 </div>
+
+<style is:global>
+  /* Same 1.5rem edge inset as the view toggle uses on the home map (HomeEarthMap.astro), for
+     consistency — MapLibre's own default is a plain 10px margin. */
+  .maplibregl-ctrl-bottom-left {
+    margin: 1.5rem !important;
+  }
+</style>
 
 <script>
   import maplibregl from 'maplibre-gl';

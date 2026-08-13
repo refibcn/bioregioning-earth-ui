@@ -50,7 +50,7 @@ for (const r of records) {
 
   <div id="panel-content" style="padding:1.25rem;overflow-y:auto;flex:1;">
     <div id="panel-welcome">
-      <h1 style="font-size:clamp(1.5rem, 2.5vw, 2rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);letter-spacing:-0.01em;line-height:1.2;">Welcome to the Bioregional Knowledge Commons</h1>
+      <h1 style="font-size:clamp(1.5rem, 2.5vw, 2rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);letter-spacing:-0.01em;line-height:1.2;">Welcome to Bioregioning Earth– a Bioregional Knowledge Commons</h1>
       <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.9rem;line-height:1.55;">This is a public knowledge base documenting organizations and practices at the frontier of bioregional work — exploring how communities around the world are learning to live and govern within the logic of place.</p>
       <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
         <strong style="color:var(--fg);">{orgCount}</strong> bioregional actors and initiatives currently mapped{themeCount > 0 && <> across <strong style="color:var(--fg);">{themeCount}</strong> themes:</>}
@@ -58,7 +58,7 @@ for (const r of records) {
       {themeCount > 0 && (
         <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;">
           {themes.map((theme) => (
-            <Badge shape="square" size="sm" icon={theme.icon} data-theme-filter={String(theme.properties['Name'] ?? theme.properties['Title'] ?? '').replace(/_/g, ' ')} class="theme-filter-badge">
+            <Badge shape="square" size="sm" icon={theme.icon} href={`${base}/ontology/${theme.id.replace(/-/g, '')}`}>
               {String(theme.properties['Name'] ?? theme.properties['Title'] ?? '').replace(/_/g, ' ')}
             </Badge>
           ))}
@@ -79,11 +79,6 @@ for (const r of records) {
     ))}
   </div>
 )}
-
-<style is:global>
-  .theme-filter-badge { cursor: pointer; }
-  .theme-filter-badge:hover { filter: brightness(0.95); }
-</style>
 
 <script>
   function initPanel() {
@@ -134,18 +129,8 @@ for (const r of records) {
     // (card click) — both live outside this component and need a shared way to drive the panel
     // regardless of which view (map/gallery) is currently active.
     (window as any).__bePanel = { showDetailById, showWelcome, open, close };
-
-    // Work Item E: welcome-sidebar theme badges switch to gallery view and pre-filter it by that
-    // theme, reusing the gallery's existing tag filter + applyFilters() rather than inventing a
-    // second filtering mechanism. index.astro exposes setView() as window.__beSetView.
-    document.querySelectorAll('.theme-filter-badge').forEach((badge) => {
-      badge.addEventListener('click', () => {
-        const tag = badge.getAttribute('data-theme-filter');
-        if (!tag) return;
-        (window as any).__beSetView?.('gallery');
-        window.dispatchEvent(new CustomEvent('gallery-filter-tag', { detail: { tag } }));
-      });
-    });
+    // Theme badges are now plain links to their /ontology/{slug} page (Badge.astro's own href
+    // prop), no click-wiring needed here anymore.
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initPanel);
