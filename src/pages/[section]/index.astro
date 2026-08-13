@@ -87,11 +87,15 @@ if (isOntology) {
 const hasMapData = records.some((r) => hasCoords(r.properties));
 ---
 
-<Layout title={section.name} description={section.description}>
+<Layout title={section.name} description={section.description} footerMarginTop={(isOntology || isSources) ? '0' : '4rem'}>
   <!-- Ontology/Sources get the same bone background as the home page's gallery view; this outer
        full-bleed wrapper carries it so it fills the whole page width/height, not just the
-       centered max-width column <main> itself is constrained to. -->
-  <div style={(isOntology || isSources) ? 'background:var(--bone);min-height:calc(100vh - 48px);' : undefined}>
+       centered max-width column <main> itself is constrained to. padding-bottom takes over the
+       4rem of pre-footer spacing Layout.astro's footer would otherwise add via its own
+       margin-top — that margin sits outside this wrapper and would show the plain page
+       background through it as a gap, so footerMarginTop above is zeroed and this wrapper
+       supplies the same spacing instead, staying bone-colored all the way to the footer. -->
+  <div style={(isOntology || isSources) ? 'background:var(--bone);min-height:calc(100vh - 48px);padding-bottom:4rem;' : undefined}>
     <main style="max-width:var(--max-w);margin:0 auto;padding:2rem 1.5rem;">
     <a href={`${base}/`} style="display:inline-block;font-size:0.8rem;color:var(--muted);margin-bottom:1.25rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">← Back to Dashboard</a>
 

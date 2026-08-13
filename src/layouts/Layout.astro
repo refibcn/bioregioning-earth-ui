@@ -3,8 +3,13 @@ export interface Props {
   title?: string;
   description?: string;
   hideFooter?: boolean;
+  // Pages with their own full-bleed background before the footer (e.g. Ontology/Sources' bone
+  // background) pass '0' here and add the equivalent spacing to their own backgrounded wrapper
+  // instead — otherwise this margin sits outside that wrapper and shows the plain page
+  // background through it as a stray gap right above the footer.
+  footerMarginTop?: string;
 }
-const { title, description, hideFooter = false } = Astro.props;
+const { title, description, hideFooter = false, footerMarginTop = '4rem' } = Astro.props;
 const siteTitle = 'Bioregioning Earth';
 const pageTitle = title ? `${title} — ${siteTitle}` : siteTitle;
 const base = import.meta.env.BASE_URL;
@@ -182,7 +187,7 @@ const navItems = [
     </nav>
     <slot />
     {!hideFooter && (
-      <footer style="border-top:1px solid var(--border);margin-top:4rem;padding:2rem 1.5rem;text-align:center;color:var(--muted);font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
+      <footer style={`border-top:1px solid var(--border);margin-top:${footerMarginTop};padding:2rem 1.5rem;text-align:center;color:var(--muted);font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;`}>
         <div style="max-width:var(--max-w);margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;align-items:center;">
           <a href="https://refibcn.cat/" target="_blank" rel="noopener noreferrer" style="color:var(--muted);text-decoration:none;">ReFi Barcelona</a>
           <span style="color:var(--border);">·</span>
