@@ -47,22 +47,24 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
 <Layout title="Dashboard" description="Explore bioregional actors, projects, and opportunities" hideFooter={true}>
   <main style="padding:0;max-width:none;height:calc(100vh - 48px);position:relative;">
     <!-- View toggle — one element, moved between two anchors by JS instead of duplicated or
-         hidden. #view-toggle-home (map view): floats absolute over the map, top:1rem;left:1.5rem,
-         same as before. #view-toggle-anchor (gallery view, rendered inside
-         OrganizationsGallery.astro's toolbar row): a genuine flex sibling of the filters bar
-         inside the same max-width column the card grid uses, so it aligns with the cards instead
-         of sitting at a viewport-fixed offset that drifted from the (centered, responsive)
+         hidden. #view-toggle-home floats absolute at top:1.5rem;left:1.5rem — matches
+         #gallery-view's own 1.5rem padding, i.e. the filters row's actual top edge, not an
+         arbitrary offset (was top:1rem, 8px too high vs the filters row). Applies to map view
+         too since it's the same anchor — the toggle sits 0.5rem lower there now as a result.
+         #view-toggle-anchor (gallery view, inside OrganizationsGallery.astro's toolbar row): a
+         genuine flex sibling of the filters bar inside the same max-width column the card grid
+         uses, so it aligns with the cards instead of drifting from the (centered, responsive)
          content column on wide screens. Square + umber per the lab's flat-control convention. -->
-    <div id="view-toggle-home" style="position:absolute;top:1rem;left:1.5rem;z-index:30;"></div>
+    <div id="view-toggle-home" style="position:absolute;top:1.5rem;left:1.5rem;z-index:30;"></div>
     <div
       id="view-toggle"
-      style="display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);flex-shrink:0;margin-right:0.75rem;"
+      style="height:2.25rem;box-sizing:border-box;display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);flex-shrink:0;margin-right:0.75rem;"
     >
       <button
         type="button"
         class="view-toggle-btn"
         data-view="map"
-        style="height:2.25rem;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:#FFFFFF;border:none;cursor:pointer;font-weight:500;"
+        style="height:100%;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:#FFFFFF;border:none;cursor:pointer;font-weight:500;"
       >
         🗺️ Map
       </button>
@@ -70,7 +72,7 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
         type="button"
         class="view-toggle-btn"
         data-view="gallery"
-        style="height:2.25rem;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--card);color:var(--muted);border:none;cursor:pointer;"
+        style="height:100%;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--card);color:var(--muted);border:none;cursor:pointer;"
       >
         🗂️ Gallery
       </button>
