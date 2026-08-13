@@ -7,7 +7,7 @@ export interface Props {
   record: NormalizedRecord;
   base?: string;
   children?: NormalizedRecord[];
-  pageContent?: string;
+  pageContent?: { intro: string; ontology: string; activities: string };
   lookups?: {
     tags?: Map<string, NormalizedRecord>;
     activities?: Map<string, NormalizedRecord>;
@@ -18,7 +18,8 @@ export interface Props {
   mode?: 'panel' | 'page';
   fullPageHref?: string;
 }
-const { record, children = [], pageContent = '', lookups = {}, mode = 'page' } = Astro.props;
+const EMPTY_PAGE_CONTENT = { intro: '', ontology: '', activities: '' };
+const { record, children = [], pageContent = EMPTY_PAGE_CONTENT, lookups = {}, mode = 'page' } = Astro.props;
 
 const isPanel = mode === 'panel';
 const title = humanize(getTitle(record));
@@ -72,15 +73,24 @@ const orgFilterOptions = Array.from(
     {title}
   </h2>
 
-  <!-- Title + long description (pageContent, the Notion page body) is the whole "header" —
-       nothing else goes above the two subheadings below. -->
-  {pageContent && (
-    <div style="margin-bottom:1.5rem;" set:html={pageContent} />
+  <!-- Title + long description (pageContent.intro, everything in the Notion page body before
+       either heading below) is the whole "header" — nothing else goes above the two
+       subheadings. -->
+  {pageContent.intro && (
+    <div style="margin-bottom:1.5rem;" set:html={pageContent.intro} />
   )}
 
   {children.length > 0 && (
     <div style="margin-bottom:1.5rem;">
-      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Tag Ontology</h3>
+      <!-- Prefer the Notion-authored "Ontology" heading (pageContent.ontology) as this section's
+           header when the page body has one — it's often followed by an inline database embed
+           our block renderer can't turn into HTML, so this fills that gap with the live tag
+           cards below instead of the app inventing a second, redundant heading. -->
+      {pageContent.ontology ? (
+        <div set:html={pageContent.ontology} />
+      ) : (
+        <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Tag Ontology</h3>
+      )}
       <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:0.75rem;">
         {children.map((child) => (
           <div style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
@@ -99,7 +109,13 @@ const orgFilterOptions = Array.from(
 
   {activityRows.length > 0 && (
     <div style="margin-bottom:1.5rem;">
-      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Activities</h3>
+      <!-- Same pattern as the Ontology section above: prefer the Notion-authored "Activities"
+           heading, filling its embed gap with the live filters + activity feed below. -->
+      {pageContent.activities ? (
+        <div set:html={pageContent.activities} />
+      ) : (
+        <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Activities</h3>
+      )}
 
       {(tagFilterOptions.length > 0 || orgFilterOptions.length > 0) && (
         <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">

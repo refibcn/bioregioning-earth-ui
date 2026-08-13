@@ -4,7 +4,10 @@ import OrgDetail from '../../components/OrgDetail.astro';
 import OntologyDetail from '../../components/OntologyDetail.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, fetchPageBlocks, renderBlocksToHtml, buildRecordMap } from '../../lib/notion';
 import type { NormalizedRecord } from '../../lib/notion';
-import { splitParentsAndChildren } from '../../lib/ontology';
+import { splitParentsAndChildren, splitBlocksByHeadings } from '../../lib/ontology';
+
+type OntologyPageContent = { intro: string; ontology: string; activities: string };
+const EMPTY_ONTOLOGY_CONTENT: OntologyPageContent = { intro: '', ontology: '', activities: '' };
 
 export async function getStaticPaths() {
   const sections = loadSectionConfig();
@@ -21,15 +24,21 @@ export async function getStaticPaths() {
     related.activities ? fetchActivitiesRecords() : Promise.resolve([]),
   ]);
 
-  // Fetch page content blocks for ontology records.
-  const ontologyBlocks: Record<string, string> = {};
+  // Fetch page content blocks for ontology records, split into intro (before any "Ontology"/
+  // "Activities" heading) plus each of those two heading sections — see splitBlocksByHeadings.
+  const ontologyBlocks: Record<string, OntologyPageContent> = {};
   if (ontologySection?.database_id) {
     for (const r of allOntology) {
       try {
         const blocks = await fetchPageBlocks(r.id);
-        ontologyBlocks[r.id] = await renderBlocksToHtml(blocks);
+        const { intro, sections } = splitBlocksByHeadings(blocks, ['Ontology', 'Activities']);
+        ontologyBlocks[r.id] = {
+          intro: await renderBlocksToHtml(intro),
+          ontology: await renderBlocksToHtml(sections['ontology'] ?? []),
+          activities: await renderBlocksToHtml(sections['activities'] ?? []),
+        };
       } catch (e) {
-        ontologyBlocks[r.id] = '';
+        ontologyBlocks[r.id] = { ...EMPTY_ONTOLOGY_CONTENT };
       }
     }
   }
@@ -53,7 +62,7 @@ export async function getStaticPaths() {
         affiliations: Map<string, NormalizedRecord>;
       };
       children?: NormalizedRecord[];
-      pageContent?: string;
+      pageContent?: OntologyPageContent;
     };
   }[] = [];
 
@@ -79,7 +88,7 @@ export async function getStaticPaths() {
             affiliations: buildRecordMap(allOrgs),
           },
           children: isOntologySection ? getChildren(r.id) : undefined,
-          pageContent: isOntologySection ? ontologyBlocks[r.id] ?? '' : undefined,
+          pageContent: isOntologySection ? ontologyBlocks[r.id] ?? EMPTY_ONTOLOGY_CONTENT : undefined,
         },
       });
     }
@@ -99,10 +108,10 @@ interface Props {
     affiliations: Map<string, NormalizedRecord>;
   };
   children?: NormalizedRecord[];
-  pageContent?: string;
+  pageContent?: OntologyPageContent;
 }
 
-const { record, sectionRoute, sectionName, lookups, children = [], pageContent = '' } = Astro.props;
+const { record, sectionRoute, sectionName, lookups, children = [], pageContent = EMPTY_ONTOLOGY_CONTENT } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const isOrgs = sectionRoute === '/organizations';
 const isOntology = sectionRoute === '/ontology';

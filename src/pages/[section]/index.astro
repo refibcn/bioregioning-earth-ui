@@ -7,6 +7,10 @@ import OrganizationsGallery from '../../components/OrganizationsGallery.astro';
 import EarthMap from '../../components/EarthMap.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, fetchPageBlocks, renderBlocksToHtml, buildRecordMap } from '../../lib/notion';
 import { hasCoords } from '../../lib/geo';
+import { splitBlocksByHeadings } from '../../lib/ontology';
+
+type OntologyPageContent = { intro: string; ontology: string; activities: string };
+const EMPTY_ONTOLOGY_CONTENT: OntologyPageContent = { intro: '', ontology: '', activities: '' };
 
 export async function getStaticPaths() {
   const sections = loadSectionConfig();
@@ -54,7 +58,7 @@ if (isSources) {
   relatedOrgs = allOrgs;
 }
 
-let ontologyPageContents: Record<string, string> = {};
+let ontologyPageContents: Record<string, OntologyPageContent> = {};
 
 if (isOntology) {
   ontologyLookups = {
@@ -62,13 +66,19 @@ if (isOntology) {
     organizations: buildRecordMap(allOrgs),
     sources: buildRecordMap(allSources),
   };
-  // Fetch page body content for ontology parent items so side panels can show it.
+  // Fetch page body content for ontology parent items so side panels can show it, split into
+  // intro plus each "Ontology"/"Activities" heading section — see splitBlocksByHeadings.
   for (const r of records) {
     try {
       const blocks = await fetchPageBlocks(r.id);
-      ontologyPageContents[r.id] = await renderBlocksToHtml(blocks);
+      const { intro, sections } = splitBlocksByHeadings(blocks, ['Ontology', 'Activities']);
+      ontologyPageContents[r.id] = {
+        intro: await renderBlocksToHtml(intro),
+        ontology: await renderBlocksToHtml(sections['ontology'] ?? []),
+        activities: await renderBlocksToHtml(sections['activities'] ?? []),
+      };
     } catch (e) {
-      ontologyPageContents[r.id] = '';
+      ontologyPageContents[r.id] = { ...EMPTY_ONTOLOGY_CONTENT };
     }
   }
 }

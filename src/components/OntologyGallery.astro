@@ -13,9 +13,10 @@ export interface Props {
     organizations?: Map<string, NormalizedRecord>;
     sources?: Map<string, NormalizedRecord>;
   };
-  pageContents?: Record<string, string>;
+  pageContents?: Record<string, { intro: string; ontology: string; activities: string }>;
 }
 const { records, basePath = '/', lookups = {}, pageContents = {} } = Astro.props;
+const EMPTY_ONTOLOGY_CONTENT = { intro: '', ontology: '', activities: '' };
 const base = import.meta.env.BASE_URL;
 
 function getTitle(r: NormalizedRecord): string {
@@ -99,7 +100,7 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
               record={parent}
               base={base}
               children={resolveChildren(parent.id)}
-              pageContent={pageContents[parent.id] ?? ''}
+              pageContent={pageContents[parent.id] ?? EMPTY_ONTOLOGY_CONTENT}
               lookups={lookups}
               mode="panel"
               fullPageHref={href}
