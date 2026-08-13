@@ -97,11 +97,11 @@ function slugFor(id: string): string {
   return id.replace(/-/g, '');
 }
 
-// G4: page-mode title bumped (was 1.25rem); panel-mode kept smaller. The clamp's min used to be
-// 1.2rem — higher than panel mode's 1.15rem target, which per the CSS clamp spec (always
-// resolves to the min when min > max) meant panel titles never actually got smaller than page
-// titles. Min is now below both targets so the clamp can actually reach either one.
-const headingSize = isPanel ? '1.15rem' : '1.6rem';
+// Heading size is unified across panel/page (matches OntologyDetail.astro's scheme exactly, so
+// both entity types' sidebars share one design) and sized to sit clearly above the 1.15rem card
+// and map-hover tier — it used to collapse to 1.15rem in panel mode, i.e. exactly the same size
+// as the gallery card it was opened from.
+const headingSize = '1.4rem';
 const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkdown()
 ---
 
@@ -116,7 +116,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
   )}
 
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;margin-bottom:0.4rem;">
-    <h2 style={`font-size:clamp(1rem, 2.5vw, ${headingSize});font-weight:500;margin:0;color:var(--fg);line-height:1.2;font-family:var(--sans);letter-spacing:-0.01em;`}>
+    <h2 style={`font-size:clamp(1.15rem, 2.5vw, ${headingSize});font-weight:500;margin:0;color:var(--fg);line-height:1.2;font-family:var(--sans);letter-spacing:-0.01em;`}>
       {title}
     </h2>
     {website && (
@@ -192,7 +192,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
           const actDescription = String(act.properties['Description'] ?? act.properties['description'] ?? '');
           return (
             <div style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-              <h4 style="margin:0 0 0.4rem 0;font-size:1.05rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(act)}</h4>
+              <h4 style="margin:0 0 0.4rem 0;font-size:1.05rem;font-weight:500;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(act)}</h4>
               {actTags.length > 0 && (
                 <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem;">
                   {actTags.map((tag) => (

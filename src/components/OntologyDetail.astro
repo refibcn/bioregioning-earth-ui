@@ -84,7 +84,7 @@ const orgFilterOptions = Array.from(
       <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:0.75rem;">
         {children.map((child) => (
           <div style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-            <h4 style="margin:0 0 0.4rem 0;font-size:0.95rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">
+            <h4 style="margin:0 0 0.4rem 0;font-size:0.95rem;font-weight:500;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">
               {child.icon && <span style="margin-right:0.4rem;">{child.icon}</span>}
               {humanize(getTitle(child))}
             </h4>
@@ -144,7 +144,7 @@ const orgFilterOptions = Array.from(
             data-orgs={a.orgs.map((o) => o.id).join('|')}
             style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);"
           >
-            <h4 style="margin:0 0 0.25rem 0;font-size:0.95rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{a.title}</h4>
+            <h4 style="margin:0 0 0.25rem 0;font-size:0.95rem;font-weight:500;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{a.title}</h4>
             {a.orgs.length > 0 && (
               <p style="margin:0 0 0.4rem 0;font-size:0.75rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
                 {a.orgs.map((o) => getTitle(o)).join(', ')}

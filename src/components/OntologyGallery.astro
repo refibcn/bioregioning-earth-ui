@@ -70,7 +70,7 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
         >
           <div style="display:flex;align-items:center;gap:0.75rem;">
             <span style="font-size:1.6rem;line-height:1;flex-shrink:0;">{getIcon(parent)}</span>
-            <h2 style="margin:0;font-size:1.25rem;font-weight:600;font-family:var(--sans);letter-spacing:-0.01em;word-break:break-word;overflow-wrap:anywhere;">{humanize(getTitle(parent))}</h2>
+            <h2 style="margin:0;font-size:1.25rem;font-weight:500;font-family:var(--sans);letter-spacing:-0.01em;word-break:break-word;overflow-wrap:anywhere;">{humanize(getTitle(parent))}</h2>
           </div>
           {getDescription(parent) && (
             <p style="margin:0;color:var(--muted);font-size:0.9rem;line-height:1.5;">{getDescription(parent)}</p>
@@ -113,7 +113,7 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
   <!-- Side panel -->
   <div
     id="ontology-side-panel"
-    style="display:none;position:fixed;top:0;right:0;bottom:0;width:420px;max-width:40%;background:color-mix(in srgb, var(--paper-50) 98%, transparent);backdrop-filter:blur(12px);border-left:1px solid var(--border);overflow:hidden;box-shadow:-8px 0 32px rgba(42,24,16,0.12);font-family:var(--sans);z-index:100;flex-direction:column;"
+    style="display:none;position:fixed;top:0;right:0;bottom:0;width:460px;max-width:45%;background:color-mix(in srgb, var(--paper-50) 98%, transparent);backdrop-filter:blur(12px);border-left:1px solid var(--border);overflow:hidden;box-shadow:-8px 0 32px rgba(42,24,16,0.12);font-family:var(--sans);z-index:100;flex-direction:column;"
   >
     <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0;">
       <a id="ontology-panel-viewfull" href="#" style="color:var(--muted);font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;text-decoration:none;" aria-label="View full page">→ View full page</a>
