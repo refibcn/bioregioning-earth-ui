@@ -222,60 +222,9 @@ const count = orgCount ?? cards.length;
 </div>
 
 <style>
-  /* Work Item D3: filter inputs match the lab's .field__input pattern — square, umber-toned
-     border at rest, terracotta focus ring. Needs a real class (not inline style) since inline
-     styles can't express :focus-visible. Explicit height (not padding-derived) because <input>,
-     <select>, and <button> each resolve padding+line-height to a different intrinsic height per
-     their own UA defaults — measured 36/38/32px respectively before this fix — so a shared
-     height + flex centering is used instead of relying on padding to produce equal heights. */
-  .field-control {
-    height: 2.25rem;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 0.75rem;
-    /* Both one step lighter than before (BE-only tweak, not fed back to the lab yet): border
-       45% -> 30% umber-mix, background --surface (--paper-100) -> --paper-50, the next step up
-       the neutral scale. */
-    border: 1px solid color-mix(in srgb, var(--umber) 30%, transparent);
-    border-radius: 0;
-    background: var(--paper-50);
-    color: var(--fg);
-    font-family: var(--sans);
-    font-size: 0.85rem;
-  }
-  /* Category and Tags dropdown popovers — one shared style so they're identical to each other,
-     with the same border color as .field-control and the same width as their trigger button
-     (was a fixed min-width:220px, independent of the button's actual — often wider — rendered
-     width). */
-  .filter-dropdown {
-    display: none;
-    position: absolute;
-    top: calc(100% + 0.25rem);
-    left: 0;
-    width: 100%;
-    z-index: 30;
-    max-height: 280px;
-    overflow-y: auto;
-    background: var(--card);
-    border: 1px solid color-mix(in srgb, var(--umber) 30%, transparent);
-    padding: 0.5rem;
-    box-shadow: 0 4px 16px rgba(42, 24, 16, 0.15);
-  }
-  .filter-dropdown-option {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.3rem 0.25rem;
-    font-size: 0.8rem;
-    color: var(--fg);
-    cursor: pointer;
-  }
-
-  .field-control:focus-visible {
-    outline: 2px solid var(--primary);
-    border-color: var(--primary);
-  }
+  /* .field-control / .filter-dropdown / .filter-dropdown-option now live in Layout.astro's
+     global styles — OntologyDetail.astro's Activities filters reuse them too, so one
+     definition instead of two drifting copies. */
 
   /* Work Item F1: CSS-only hover — the previous onmouseenter/onmouseleave inline-style pattern
      could get "stuck" if a mouseleave event was interrupted (fast pointer movement, touch,

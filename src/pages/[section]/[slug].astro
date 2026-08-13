@@ -48,6 +48,7 @@ export async function getStaticPaths() {
       lookups: {
         tags: Map<string, NormalizedRecord>;
         activities: Map<string, NormalizedRecord>;
+        organizations: Map<string, NormalizedRecord>;
         sources: Map<string, NormalizedRecord>;
         affiliations: Map<string, NormalizedRecord>;
       };
@@ -73,6 +74,7 @@ export async function getStaticPaths() {
           lookups: {
             tags: buildRecordMap(allOntology),
             activities: buildRecordMap(allActivities),
+            organizations: buildRecordMap(allOrgs),
             sources: buildRecordMap(allSources),
             affiliations: buildRecordMap(allOrgs),
           },

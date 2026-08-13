@@ -1,16 +1,7 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
-import { getTitle, getUrl, humanize } from '../lib/notion';
+import { getTitle, getDescription, humanize } from '../lib/notion';
 import Badge from './Badge.astro';
-
-function getSourceIcon(src: NormalizedRecord) {
-  const type = String(src.properties['Source type'] ?? src.properties['source type'] ?? '').toLowerCase();
-  if (type.includes('book')) return '📚';
-  if (type.includes('article')) return '📄';
-  if (type.includes('report')) return '📊';
-  if (type.includes('video')) return '🎬';
-  return src.icon ?? '📄';
-}
 
 export interface Props {
   record: NormalizedRecord;
@@ -27,192 +18,205 @@ export interface Props {
   mode?: 'panel' | 'page';
   fullPageHref?: string;
 }
-const { record, base = '', children = [], pageContent = '', lookups = {}, mode = 'page' } = Astro.props;
+const { record, children = [], pageContent = '', lookups = {}, mode = 'page' } = Astro.props;
 
 const isPanel = mode === 'panel';
 const title = humanize(getTitle(record));
 
-function slugFor(id: string): string {
-  return id.replace(/-/g, '');
-}
+// Heading size is now the same in both modes (was 1.15rem panel / 1.6rem page) — the
+// inconsistency was the actual complaint, not the panel needing to be smaller.
+const headingSize = '1.4rem';
+const sectionHeadingSize = '1.25rem';
 
-function recordReferencesTarget(r: NormalizedRecord, targetId: string): boolean {
-  for (const value of Object.values(r.properties)) {
-    if (Array.isArray(value) && value.some((v) => typeof v === 'string' && v === targetId)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Resolve reverse relations: find records whose relation properties point to this ontology item.
+// Activities related to this theme: matched against an activity's Tags relation (named
+// "Ontology" on the live schema) including this record's own id and all of its children's —
+// so a parent theme picks up activities tagged with any of its child tags, not just itself.
 const allActivities = Array.from(lookups.activities?.values() ?? []);
-const allOrganizations = Array.from(lookups.organizations?.values() ?? []);
-const allSources = Array.from(lookups.sources?.values() ?? []);
-
-// Work Item I5: was a brute-force scan across ALL of an activity's properties, matching only
-// this exact record's own id — so a parent theme never picked up activities tagged with one of
-// its children instead of the theme itself. Now targeted at the relation specifically (an
-// activity's ontology-tag relation is named "Ontology" on the live schema, not "Tags" — same
-// field OrgDetail.astro reads for its own activity tags), and climbs down to children too.
 const childIds = children.map((c) => c.id);
 const activityTargetIds = new Set([record.id, ...childIds]);
+
 function getActTagIds(act: NormalizedRecord): string[] {
   return Array.isArray(act.properties['Ontology']) ? act.properties['Ontology'] : [];
 }
-const relatedActivities = allActivities.filter((act) => getActTagIds(act).some((id) => activityTargetIds.has(id)));
-const relatedOrganizations = allOrganizations.filter((r) => recordReferencesTarget(r, record.id));
-const relatedSources = allSources.filter((r) => recordReferencesTarget(r, record.id));
+function getActOrgIds(act: NormalizedRecord): string[] {
+  return Array.isArray(act.properties['Organization']) ? act.properties['Organization'] : [];
+}
 
-const headingSize = isPanel ? '1.15rem' : '1.6rem';
-const sectionHeadingSize = '1.25rem';
+const relatedActivities = allActivities.filter((act) => getActTagIds(act).some((id) => activityTargetIds.has(id)));
+
+const activityRows = relatedActivities.map((act) => {
+  const tags = getActTagIds(act).map((id) => lookups.tags?.get(id)).filter(Boolean) as NormalizedRecord[];
+  const orgs = getActOrgIds(act).map((id) => lookups.organizations?.get(id)).filter(Boolean) as NormalizedRecord[];
+  return {
+    record: act,
+    title: getTitle(act),
+    description: String(act.properties['Description'] ?? act.properties['description'] ?? ''),
+    tags,
+    orgs,
+  };
+});
+
+// Filter option lists — only tags/orgs actually present among this theme's related activities,
+// not every tag/org site-wide.
+const tagFilterOptions = Array.from(
+  new Map(activityRows.flatMap((a) => a.tags).map((t) => [t.id, t])).values()
+).sort((a, b) => humanize(getTitle(a)).localeCompare(humanize(getTitle(b))));
+const orgFilterOptions = Array.from(
+  new Map(activityRows.flatMap((a) => a.orgs).map((o) => [o.id, o])).values()
+).sort((a, b) => getTitle(a).localeCompare(getTitle(b)));
 ---
 
 <div class="ontology-detail-root">
-  <h2 style={`font-size:clamp(1rem, 2.5vw, ${headingSize});font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);line-height:1.2;font-family:var(--sans);letter-spacing:-0.01em;`}>
+  <h2 style={`font-size:clamp(1.15rem, 2.5vw, ${headingSize});font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);line-height:1.2;font-family:var(--sans);letter-spacing:-0.01em;`}>
     {record.icon && <span style="margin-right:0.5rem;">{record.icon}</span>}
     {title}
   </h2>
 
-  {/* I2: the short Description property paragraph is gone — pageContent (the Notion page
-      body, the de-facto "long description") now runs first instead of dead-last, per the
-      requested order: long description -> ontology (tags) -> activities. "View full page" also
-      moved out of here into the panel header (I6/G6 parity), so there's nothing else above it. */}
+  <!-- Title + long description (pageContent, the Notion page body) is the whole "header" —
+       nothing else goes above the two subheadings below. -->
   {pageContent && (
     <div style="margin-bottom:1.5rem;" set:html={pageContent} />
   )}
 
   {children.length > 0 && (
     <div style="margin-bottom:1.5rem;">
-      {/* I3: was literally "Ontology" — redundant on a page that's already inside the Ontology
-          section (compounded by the section back-link also saying "Ontology"). I4: children are
-          now click-to-filter — clicking one filters the Activities list below to just the
-          activities tagged with it (or with this record itself), instead of being inert. */}
-      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Related tags</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
+      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Tag Ontology</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:0.75rem;">
         {children.map((child) => (
-          <Badge shape="square" icon={child.icon} class="ontology-tag-filter" data-filter-tag={child.id}>{humanize(getTitle(child))}</Badge>
+          <div style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
+            <h4 style="margin:0 0 0.4rem 0;font-size:0.95rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">
+              {child.icon && <span style="margin-right:0.4rem;">{child.icon}</span>}
+              {humanize(getTitle(child))}
+            </h4>
+            {getDescription(child) && (
+              <p style="margin:0;font-size:0.85rem;color:var(--muted);line-height:1.55;">{getDescription(child)}</p>
+            )}
+          </div>
         ))}
-        <button type="button" class="ontology-tag-filter-clear" style="display:none;background:none;border:none;color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;padding:0.3em 0.5em;">Clear filter</button>
       </div>
     </div>
   )}
 
-  {relatedActivities.length > 0 && (
+  {activityRows.length > 0 && (
     <div style="margin-bottom:1.5rem;">
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Activities</h3>
-      <div class="ontology-activities-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:0.75rem;">
-        {relatedActivities.map((act) => {
-          const actTags = getActTagIds(act).map((id) => lookups.tags?.get(id)).filter(Boolean) as NormalizedRecord[];
-          return (
-            <div class="ontology-activity-card" data-tags={getActTagIds(act).join('|')} style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-              <h4 style="margin:0 0 0.4rem 0;font-size:0.95rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(act)}</h4>
-              {actTags.length > 0 && (
-                <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem;">
-                  {actTags.map((tag) => (
-                    <Badge size="sm" shape="square" icon={tag.icon}>{humanize(getTitle(tag))}</Badge>
-                  ))}
-                </div>
-              )}
-              {act.properties['Description'] && (
-                <p style="margin:0;font-size:0.85rem;color:var(--muted);line-height:1.55;">{String(act.properties['Description'])}</p>
-              )}
+
+      {(tagFilterOptions.length > 0 || orgFilterOptions.length > 0) && (
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">
+          {tagFilterOptions.length > 0 && (
+            <div class="ontology-filter-wrap" style="position:relative;">
+              <button type="button" class="ontology-tags-filter-toggle field-control" style="cursor:pointer;white-space:nowrap;">
+                Tags<span class="ontology-tags-filter-count"></span>
+              </button>
+              <div class="ontology-tags-filter-dropdown filter-dropdown">
+                {tagFilterOptions.map((t) => (
+                  <label class="filter-dropdown-option">
+                    <input type="checkbox" class="ontology-tags-filter-checkbox" value={t.id} />
+                    {t.icon ? `${t.icon} ` : ''}{humanize(getTitle(t))}
+                  </label>
+                ))}
+              </div>
             </div>
-          );
-        })}
-      </div>
-    </div>
-  )}
+          )}
+          {orgFilterOptions.length > 0 && (
+            <div class="ontology-filter-wrap" style="position:relative;">
+              <button type="button" class="ontology-org-filter-toggle field-control" style="cursor:pointer;white-space:nowrap;">
+                Organizations<span class="ontology-org-filter-count"></span>
+              </button>
+              <div class="ontology-org-filter-dropdown filter-dropdown">
+                {orgFilterOptions.map((o) => (
+                  <label class="filter-dropdown-option">
+                    <input type="checkbox" class="ontology-org-filter-checkbox" value={o.id} />
+                    {getTitle(o)}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
-  {relatedOrganizations.length > 0 && (
-    <div style="margin-bottom:1.5rem;">
-      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Organizations</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-        {relatedOrganizations.map((org) => (
-          <Badge href={`${base}/organizations/${slugFor(org.id)}`}>{getTitle(org)}</Badge>
+      <div class="ontology-activities-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:0.75rem;">
+        {activityRows.map((a) => (
+          <div
+            class="ontology-activity-card"
+            data-tags={a.tags.map((t) => t.id).join('|')}
+            data-orgs={a.orgs.map((o) => o.id).join('|')}
+            style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);"
+          >
+            <h4 style="margin:0 0 0.25rem 0;font-size:0.95rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{a.title}</h4>
+            {a.orgs.length > 0 && (
+              <p style="margin:0 0 0.4rem 0;font-size:0.75rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
+                {a.orgs.map((o) => getTitle(o)).join(', ')}
+              </p>
+            )}
+            {a.tags.length > 0 && (
+              <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem;">
+                {a.tags.map((tag) => (
+                  <Badge size="sm" shape="square" icon={tag.icon}>{humanize(getTitle(tag))}</Badge>
+                ))}
+              </div>
+            )}
+            {a.description && (
+              <p style="margin:0;font-size:0.85rem;color:var(--muted);line-height:1.55;">{a.description}</p>
+            )}
+          </div>
         ))}
-      </div>
-    </div>
-  )}
-
-  {relatedSources.length > 0 && (
-    <div style="margin-bottom:1.5rem;">
-      <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Sources</h3>
-      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
-          <thead>
-            <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
-              <th style="text-align:left;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Type</th>
-              <th style="text-align:left;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Name</th>
-              <th style="text-align:left;padding:0.6rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            {relatedSources.map((src) => {
-              const sourceType = String(src.properties['Source type'] ?? src.properties['source type'] ?? '');
-              const externalUrl = getUrl(src);
-              const linkHref = externalUrl ?? `${base}/sources/${slugFor(src.id)}`;
-              const linkLabel = externalUrl ? 'Visit source' : 'View source record';
-              return (
-                <tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:0.5rem 1rem;white-space:nowrap;">
-                    <Badge size="sm" icon={getSourceIcon(src)}>{sourceType}</Badge>
-                  </td>
-                  <td style="padding:0.5rem 1rem;color:var(--fg);font-weight:500;">{getTitle(src)}</td>
-                  <td style="padding:0.5rem 1rem;">
-                    <a href={linkHref} target={externalUrl ? '_blank' : undefined} rel={externalUrl ? 'noopener noreferrer' : undefined} style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius);background:var(--umber);color:var(--paper-50);font-size:0.9rem;text-decoration:none;" aria-label={linkLabel} title={linkLabel}>
-                      ↗
-                    </a>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
       </div>
     </div>
   )}
 </div>
 
-<style is:global>
-  /* Global, not scoped: these classes land on <span>/<button> elements rendered by Badge.astro
-     (a child component), which don't receive this component's scope-hash attribute. */
-  .ontology-tag-filter { cursor: pointer; }
-  .ontology-tag-filter:hover { filter: brightness(0.95); }
-</style>
-
 <script>
-  // I4: clicking a "Related tags" badge filters the Activities grid below to activities whose
-  // data-tags includes that badge's tag id. Event-delegated on document (not per-badge
+  // Activities filters (Tags, Organizations) — multi-select checkboxes, match-any within each
+  // filter, AND between the two filters. Event-delegated on document (not per-element
   // addEventListener) because OntologyGallery.astro's side panel injects a clone of this
   // component's markup into the DOM well after this script's module has already run once at
-  // page load — direct listeners bound at that point would never reach the dynamically-injected
-  // clone. Scoped to the clicked badge's own .ontology-detail-root so multiple hidden panel
-  // templates on the same listing page (one per parent theme) don't cross-filter each other.
+  // page load. Scoped to the interacted element's own .ontology-detail-root so multiple hidden
+  // panel templates on the same listing page (one per parent theme) don't cross-filter.
+  function applyOntologyActivityFilters(root: Element) {
+    const grid = root.querySelector('.ontology-activities-grid');
+    if (!grid) return;
+    const selectedTags = Array.from(root.querySelectorAll('.ontology-tags-filter-checkbox'))
+      .filter((cb) => (cb as HTMLInputElement).checked)
+      .map((cb) => (cb as HTMLInputElement).value);
+    const selectedOrgs = Array.from(root.querySelectorAll('.ontology-org-filter-checkbox'))
+      .filter((cb) => (cb as HTMLInputElement).checked)
+      .map((cb) => (cb as HTMLInputElement).value);
+    const tagsCountEl = root.querySelector('.ontology-tags-filter-count');
+    const orgCountEl = root.querySelector('.ontology-org-filter-count');
+    if (tagsCountEl) tagsCountEl.textContent = selectedTags.length > 0 ? ` (${selectedTags.length})` : '';
+    if (orgCountEl) orgCountEl.textContent = selectedOrgs.length > 0 ? ` (${selectedOrgs.length})` : '';
+
+    grid.querySelectorAll('.ontology-activity-card').forEach((card) => {
+      const cardTags = (card.getAttribute('data-tags') ?? '').split('|').filter(Boolean);
+      const cardOrgs = (card.getAttribute('data-orgs') ?? '').split('|').filter(Boolean);
+      const matchesTags = selectedTags.length === 0 || selectedTags.some((t) => cardTags.includes(t));
+      const matchesOrgs = selectedOrgs.length === 0 || selectedOrgs.some((o) => cardOrgs.includes(o));
+      (card as HTMLElement).style.display = matchesTags && matchesOrgs ? '' : 'none';
+    });
+  }
+
+  document.addEventListener('change', (e) => {
+    const target = e.target as HTMLElement | null;
+    if (!target?.matches?.('.ontology-tags-filter-checkbox, .ontology-org-filter-checkbox')) return;
+    const root = target.closest('.ontology-detail-root');
+    if (root) applyOntologyActivityFilters(root);
+  });
+
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement | null;
-    const badge = target?.closest?.('.ontology-tag-filter') as HTMLElement | null;
-    if (badge) {
-      const root = badge.closest('.ontology-detail-root');
-      const tagId = badge.getAttribute('data-filter-tag');
-      if (!root || !tagId) return;
-      const grid = root.querySelector('.ontology-activities-grid');
-      const clearBtn = root.querySelector('.ontology-tag-filter-clear') as HTMLElement | null;
-      grid?.querySelectorAll('.ontology-activity-card').forEach((card) => {
-        const tags = (card.getAttribute('data-tags') ?? '').split('|').filter(Boolean);
-        (card as HTMLElement).style.display = tags.includes(tagId) ? '' : 'none';
-      });
-      if (clearBtn) clearBtn.style.display = 'inline-block';
+    const toggle = target?.closest?.('.ontology-tags-filter-toggle, .ontology-org-filter-toggle') as HTMLElement | null;
+    if (toggle) {
+      e.stopPropagation();
+      const wrap = toggle.closest('.ontology-filter-wrap');
+      const dropdown = wrap?.querySelector('.filter-dropdown') as HTMLElement | null;
+      if (dropdown) dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
       return;
     }
-    const clearBtn = target?.closest?.('.ontology-tag-filter-clear') as HTMLElement | null;
-    if (clearBtn) {
-      const root = clearBtn.closest('.ontology-detail-root');
-      const grid = root?.querySelector('.ontology-activities-grid');
-      grid?.querySelectorAll('.ontology-activity-card').forEach((card) => {
-        (card as HTMLElement).style.display = '';
-      });
-      clearBtn.style.display = 'none';
-    }
+    // Click outside any open dropdown closes it.
+    document.querySelectorAll('.ontology-filter-wrap .filter-dropdown').forEach((dd) => {
+      if (!dd.contains(target) ) (dd as HTMLElement).style.display = 'none';
+    });
   });
 </script>

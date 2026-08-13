@@ -55,7 +55,7 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
 ---
 
 <div id="ontology-gallery-root" style="position:relative;">
-  <div style="display:flex;flex-direction:column;gap:1.5rem;">
+  <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:1.5rem;">
     {parents.map((parent) => {
       const slug = parent.id.replace(/-/g, '');
       const href = `${base}${basePath.replace(/\/$/, '')}/${slug}`;

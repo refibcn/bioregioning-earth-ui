@@ -112,6 +112,52 @@ const navItems = [
          same, same as the source-of-truth pattern. */
       .nav-link { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 2px; }
       .nav-link:hover, .nav-link.active { color: var(--umber); border-bottom-color: var(--umber); text-decoration: none; }
+
+      /* Shared filter-control pattern (moved here from OrganizationsGallery.astro's scoped
+         style so OntologyDetail.astro's Activities filters can reuse it too — square,
+         umber-toned border, terracotta focus ring, explicit height since <input>/<select>/
+         <button> each resolve padding+line-height to a different intrinsic height under their
+         own UA defaults). */
+      .field-control {
+        height: 2.25rem;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 0.75rem;
+        border: 1px solid color-mix(in srgb, var(--umber) 30%, transparent);
+        border-radius: 0;
+        background: var(--paper-50);
+        color: var(--fg);
+        font-family: var(--sans);
+        font-size: 0.85rem;
+      }
+      .field-control:focus-visible {
+        outline: 2px solid var(--primary);
+        border-color: var(--primary);
+      }
+      .filter-dropdown {
+        display: none;
+        position: absolute;
+        top: calc(100% + 0.25rem);
+        left: 0;
+        width: 100%;
+        z-index: 30;
+        max-height: 280px;
+        overflow-y: auto;
+        background: var(--card);
+        border: 1px solid color-mix(in srgb, var(--umber) 30%, transparent);
+        padding: 0.5rem;
+        box-shadow: 0 4px 16px rgba(42, 24, 16, 0.15);
+      }
+      .filter-dropdown-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.3rem 0.25rem;
+        font-size: 0.8rem;
+        color: var(--fg);
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
