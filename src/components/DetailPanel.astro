@@ -1,0 +1,117 @@
+---
+// Shared detail-panel shell used by both the org-detail sidebar (HomeDetailPanel.astro) and the
+// ontology-detail sidebar (OntologyGallery.astro) — one component, one CSS definition, so their
+// container chrome (position, size, border, radius, shadow, header layout) can't drift apart the
+// way it did before this was extracted: the org panel had ended up a floating rounded card while
+// the ontology panel had ended up a flush, square-cornered, full-height drawer, despite both
+// being "the same kind of sidebar." Content is entirely up to the consumer via the default
+// slot — this only owns the shell and the one behavior that's identical everywhere it's used:
+// how the panel closes (✕ button, Escape key, click-inside doesn't bubble to a page-level
+// click-outside handler).
+export interface Props {
+  panelId: string;
+  // 'fixed' (default) pins the panel to the viewport, needed on pages that scroll under it
+  // (e.g. the /ontology listing page). 'absolute' is for panels living inside their own
+  // position:relative overlay container that doesn't itself scroll (the home page's map/gallery
+  // view) — the two aren't interchangeable, but every other visual property below is shared.
+  position?: 'fixed' | 'absolute';
+  // The home page's panel is visible by default (showing welcome content) the instant the page
+  // loads, rather than waiting on index.astro's own script to call open() — that call can race
+  // this component's script on first paint, so the default has to be correct without it.
+  initiallyOpen?: boolean;
+}
+const { panelId, position = 'fixed', initiallyOpen = false } = Astro.props;
+---
+
+<div id={panelId} class="detail-side-panel" style={`display:${initiallyOpen ? 'flex' : 'none'};position:${position};`}>
+  <div class="detail-side-panel-header">
+    <a id={`${panelId}-viewfull`} href="#" class="detail-side-panel-viewfull" aria-label="View full page">→ View full page</a>
+    <button id={`${panelId}-close`} type="button" class="detail-side-panel-close" aria-label="Close panel">✕</button>
+  </div>
+  <div id={`${panelId}-content`} class="detail-side-panel-content">
+    <slot />
+  </div>
+</div>
+
+<style is:global>
+  .detail-side-panel {
+    top: 0.5rem;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    width: 460px;
+    max-width: 45%;
+    background: color-mix(in srgb, var(--paper-50) 98%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(42, 24, 16, 0.12);
+    font-family: var(--sans);
+    z-index: 100;
+    flex-direction: column;
+  }
+  .detail-side-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .detail-side-panel-viewfull {
+    /* Hidden until a consumer has an actual page to link to and reveals it (each one owns its
+       own welcome-vs-detail state, so this can't default to visible here). */
+    display: none;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+  }
+  .detail-side-panel-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+  }
+  .detail-side-panel-content {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+</style>
+
+<script>
+  // Generic close-button + Escape-key + no-bubble wiring for every .detail-side-panel on the
+  // page. Opening and populating content stays each consumer's own job (HomeDetailPanel.astro /
+  // OntologyGallery.astro) since what "open" means differs there — welcome-vs-detail state,
+  // which click triggers it, how content gets filled in — but closing is identical everywhere.
+  function initPanel(panel: HTMLElement) {
+    const closeBtn = document.getElementById(`${panel.id}-close`);
+    closeBtn?.addEventListener('click', () => {
+      panel.style.display = 'none';
+    });
+    panel.addEventListener('click', (e) => e.stopPropagation());
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll<HTMLElement>('.detail-side-panel').forEach((panel) => {
+      panel.style.display = 'none';
+    });
+  });
+
+  function initAll() {
+    document.querySelectorAll<HTMLElement>('.detail-side-panel').forEach(initPanel);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
+  }
+</script>

@@ -4,6 +4,7 @@ import { humanize } from '../lib/notion';
 import { splitParentsAndChildren } from '../lib/ontology';
 import OntologyDetail from './OntologyDetail.astro';
 import Badge from './Badge.astro';
+import DetailPanel from './DetailPanel.astro';
 
 export interface Props {
   records: NormalizedRecord[];
@@ -111,17 +112,9 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
     </div>
   )}
 
-  <!-- Side panel -->
-  <div
-    id="ontology-side-panel"
-    style="display:none;position:fixed;top:0;right:0;bottom:0;width:460px;max-width:45%;background:color-mix(in srgb, var(--paper-50) 98%, transparent);backdrop-filter:blur(12px);border-left:1px solid var(--border);overflow:hidden;box-shadow:-8px 0 32px rgba(42,24,16,0.12);font-family:var(--sans);z-index:100;flex-direction:column;"
-  >
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <a id="ontology-panel-viewfull" href="#" style="color:var(--muted);font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;text-decoration:none;" aria-label="View full page">→ View full page</a>
-      <button id="ontology-panel-close" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:0;" aria-label="Close panel">✕</button>
-    </div>
-    <div id="ontology-panel-content" style="padding:1.25rem;overflow-y:auto;flex:1;"></div>
-  </div>
+  <!-- Side panel — shell shared with the org-detail sidebar via DetailPanel.astro; only the
+       click-to-populate wiring below is specific to this gallery. -->
+  <DetailPanel panelId="ontology-side-panel" />
 </div>
 
 <script define:vars={{ hasLookups }}>
@@ -129,9 +122,8 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
     if (!hasLookups) return;
 
     const panel = document.getElementById('ontology-side-panel');
-    const panelContent = document.getElementById('ontology-panel-content');
-    const panelClose = document.getElementById('ontology-panel-close');
-    const panelViewFull = document.getElementById('ontology-panel-viewfull');
+    const panelContent = document.getElementById('ontology-side-panel-content');
+    const panelViewFull = document.getElementById('ontology-side-panel-viewfull');
 
     function openPanel(id) {
       if (!panel || !panelContent) return;
@@ -140,26 +132,19 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
       panelContent.innerHTML = template.innerHTML;
       const card = document.querySelector(`.ontology-parent-card[data-id="${id}"]`);
       const fullHref = card?.getAttribute('data-full-href');
-      if (panelViewFull && fullHref) panelViewFull.setAttribute('href', fullHref);
+      if (panelViewFull && fullHref) {
+        panelViewFull.setAttribute('href', fullHref);
+        panelViewFull.style.display = 'inline-block';
+      }
       panel.style.display = 'flex';
       panelContent.scrollTop = 0;
     }
-
-    function closePanel() {
-      if (panel) panel.style.display = 'none';
-    }
-
-    panelClose?.addEventListener('click', closePanel);
 
     document.querySelectorAll('.ontology-parent-card').forEach((card) => {
       card.addEventListener('click', () => {
         const id = card.getAttribute('data-id');
         if (id) openPanel(id);
       });
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closePanel();
     });
   })();
 </script>
