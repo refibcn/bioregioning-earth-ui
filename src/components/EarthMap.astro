@@ -254,7 +254,7 @@ if (missingCoordsRecords.length > 0) {
             ${m.category ? `<span class="badge badge--xs badge--pill badge--${m.categoryTone}">${m.category}</span>` : '<span></span>'}
             ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);">Case study</span>` : ''}
           </div>` : ''}
-          <div style="font-weight:600;font-size:0.95rem;color:var(--fg);margin-bottom:0.3rem;">${m.name}</div>
+          <div style="font-weight:600;font-size:1.15rem;color:var(--fg);margin-bottom:0.3rem;">${m.name}</div>
           ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;margin-bottom:0.3rem;">${m.place}</div>` : ''}
           ${(m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
             ${m.tags.map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
