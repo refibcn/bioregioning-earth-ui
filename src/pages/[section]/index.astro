@@ -88,7 +88,11 @@ const hasMapData = records.some((r) => hasCoords(r.properties));
 ---
 
 <Layout title={section.name} description={section.description}>
-  <main style="max-width:var(--max-w);margin:0 auto;padding:2rem 1.5rem;">
+  <!-- Ontology/Sources get the same bone background as the home page's gallery view; this outer
+       full-bleed wrapper carries it so it fills the whole page width/height, not just the
+       centered max-width column <main> itself is constrained to. -->
+  <div style={(isOntology || isSources) ? 'background:var(--bone);min-height:calc(100vh - 48px);' : undefined}>
+    <main style="max-width:var(--max-w);margin:0 auto;padding:2rem 1.5rem;">
     <a href={`${base}/`} style="display:inline-block;font-size:0.8rem;color:var(--muted);margin-bottom:1.25rem;text-decoration:none;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">← Back to Dashboard</a>
 
     <header style="margin-bottom:2rem;">
@@ -116,5 +120,6 @@ const hasMapData = records.some((r) => hasCoords(r.properties));
     {isOntology && <OntologyGallery records={records} basePath={section.route} lookups={ontologyLookups} pageContents={ontologyPageContents} />}
     {isSources && <SourcesTable records={records} basePath={section.route} relatedOrgs={relatedOrgs} />}
     {!isOrgs && !isOntology && !isSources && <NetworkSection records={records} basePath={section.route} />}
-  </main>
+    </main>
+  </div>
 </Layout>
