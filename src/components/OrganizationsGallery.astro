@@ -110,7 +110,9 @@ const count = orgCount ?? cards.length;
          gap only when it's actually docked here, so an empty anchor (toggle floating outside on
          wide screens) doesn't leave a phantom gap before the filters bar. -->
     {viewToggle && <div id="view-toggle-anchor" style="display:flex;flex-shrink:0;"></div>}
-    <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:1.25rem;">
+    <!-- gap:1rem matches #gallery-grid's own card gap below, so filter-control spacing and
+         card spacing read as the same rhythm. -->
+    <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:1rem;">
       <input
         id="gallery-search"
         type="text"
@@ -232,18 +234,20 @@ const count = orgCount ?? cards.length;
     display: inline-flex;
     align-items: center;
     padding: 0 0.75rem;
-    border: 1px solid color-mix(in srgb, var(--umber) 45%, transparent);
+    /* Both one step lighter than before (BE-only tweak, not fed back to the lab yet): border
+       45% -> 30% umber-mix, background --surface (--paper-100) -> --paper-50, the next step up
+       the neutral scale. */
+    border: 1px solid color-mix(in srgb, var(--umber) 30%, transparent);
     border-radius: 0;
-    background: var(--surface);
+    background: var(--paper-50);
     color: var(--fg);
     font-family: var(--sans);
     font-size: 0.85rem;
   }
   /* Category and Tags dropdown popovers — one shared style so they're identical to each other,
-     with the same border color as .field-control (was var(--umber) full-strength on the old
-     tags popover, a mismatch against the input's 45%-mixed border) and the same width as their
-     trigger button (was a fixed min-width:220px, independent of the button's actual — often
-     wider — rendered width). */
+     with the same border color as .field-control and the same width as their trigger button
+     (was a fixed min-width:220px, independent of the button's actual — often wider — rendered
+     width). */
   .filter-dropdown {
     display: none;
     position: absolute;
@@ -254,7 +258,7 @@ const count = orgCount ?? cards.length;
     max-height: 280px;
     overflow-y: auto;
     background: var(--card);
-    border: 1px solid color-mix(in srgb, var(--umber) 45%, transparent);
+    border: 1px solid color-mix(in srgb, var(--umber) 30%, transparent);
     padding: 0.5rem;
     box-shadow: 0 4px 16px rgba(42, 24, 16, 0.15);
   }
