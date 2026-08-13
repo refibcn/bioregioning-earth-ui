@@ -97,43 +97,45 @@ const count = orgCount ?? cards.length;
     </header>
   )}
 
-  <!-- Filters. Square + umber-bordered per the lab's .field__input pattern. Sticky so it stays
-       in place while the grid below scrolls. When viewToggle is set (home page only), a
-       margin-left reserves room for the floating map/gallery toggle (index.astro) to its left —
-       same element, same position.absolute top/left in every view, never duplicated or moved;
-       this just keeps the filters bar from starting underneath it. -->
-  <div id="gallery-filters" style={`position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem;padding:0.75rem;border:1px solid var(--border);background:var(--card);align-items:center;${viewToggle ? 'margin-left:13rem;' : ''}`}>
-    <input
-      id="gallery-search"
-      type="text"
-      placeholder="Search by name..."
-      class="field-control"
-      style="flex:1;min-width:180px;"
-    />
-    <select id="gallery-filter-category" class="field-control">
-      <option value="">All categories</option>
-      {categories.map((c) => <option value={c}>{c}</option>)}
-    </select>
-    <div class="tag-filter-wrap" style="position:relative;">
-      <button type="button" id="gallery-tags-toggle" class="field-control" style="cursor:pointer;white-space:nowrap;">
-        Tags<span id="gallery-tags-count"></span>
-      </button>
-      <div id="gallery-tags-dropdown" style="display:none;position:absolute;top:calc(100% + 0.25rem);left:0;z-index:30;min-width:220px;max-height:280px;overflow-y:auto;background:var(--card);border:1px solid var(--umber);padding:0.5rem;box-shadow:0 4px 16px rgba(42,24,16,0.15);">
-        {allTags.map((t) => (
-          <label style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0.25rem;font-size:0.8rem;color:var(--fg);cursor:pointer;">
-            <input type="checkbox" class="gallery-tag-checkbox" value={t} />
-            {t}
-          </label>
-        ))}
+  <!-- Toolbar row: view toggle (when present) as its own box, flush left, immediately before
+       the filters bar — a real flex sibling inside this same max-width column the card grid
+       uses below, so the whole row (not a viewport-fixed offset) aligns with the cards on any
+       screen width. Sticky as one row so toggle + filters bar move and stay together. -->
+  <div id="gallery-toolbar" style="position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+    {viewToggle && <div id="view-toggle-anchor" style="display:flex;flex-shrink:0;"></div>}
+    <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);background:var(--card);align-items:center;">
+      <input
+        id="gallery-search"
+        type="text"
+        placeholder="Search by name..."
+        class="field-control"
+        style="flex:1;min-width:180px;"
+      />
+      <select id="gallery-filter-category" class="field-control">
+        <option value="">All categories</option>
+        {categories.map((c) => <option value={c}>{c}</option>)}
+      </select>
+      <div class="tag-filter-wrap" style="position:relative;">
+        <button type="button" id="gallery-tags-toggle" class="field-control" style="cursor:pointer;white-space:nowrap;">
+          Tags<span id="gallery-tags-count"></span>
+        </button>
+        <div id="gallery-tags-dropdown" style="display:none;position:absolute;top:calc(100% + 0.25rem);left:0;z-index:30;min-width:220px;max-height:280px;overflow-y:auto;background:var(--card);border:1px solid var(--umber);padding:0.5rem;box-shadow:0 4px 16px rgba(42,24,16,0.15);">
+          {allTags.map((t) => (
+            <label style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0.25rem;font-size:0.8rem;color:var(--fg);cursor:pointer;">
+              <input type="checkbox" class="gallery-tag-checkbox" value={t} />
+              {t}
+            </label>
+          ))}
+        </div>
       </div>
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);white-space:nowrap;cursor:pointer;">
+        <input type="checkbox" id="gallery-filter-case-study" />
+        Case study only
+      </label>
+      <button id="gallery-filter-reset" class="field-control" style="color:var(--muted);font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;">
+        Reset
+      </button>
     </div>
-    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);white-space:nowrap;cursor:pointer;">
-      <input type="checkbox" id="gallery-filter-case-study" />
-      Case study only
-    </label>
-    <button id="gallery-filter-reset" class="field-control" style="color:var(--muted);font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;">
-      Reset
-    </button>
   </div>
 
   <!-- Card grid -->

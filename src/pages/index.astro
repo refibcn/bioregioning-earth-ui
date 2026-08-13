@@ -46,20 +46,23 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
 
 <Layout title="Dashboard" description="Explore bioregional actors, projects, and opportunities" hideFooter={true}>
   <main style="padding:0;max-width:none;height:calc(100vh - 48px);position:relative;">
-    <!-- Floating view toggle — one element, one fixed position (top:1rem;left:1.5rem, relative
-         to <main>), always visible and never moved or restyled by view. Gallery view's filters
-         bar (OrganizationsGallery.astro, viewToggle prop) reserves space to this element's right
-         via margin-left so they read as one row without the toggle being duplicated/embedded
-         inside it. Square + umber per the lab's flat-control convention. -->
+    <!-- View toggle — one element, moved between two anchors by JS instead of duplicated or
+         hidden. #view-toggle-home (map view): floats absolute over the map, top:1rem;left:1.5rem,
+         same as before. #view-toggle-anchor (gallery view, rendered inside
+         OrganizationsGallery.astro's toolbar row): a genuine flex sibling of the filters bar
+         inside the same max-width column the card grid uses, so it aligns with the cards instead
+         of sitting at a viewport-fixed offset that drifted from the (centered, responsive)
+         content column on wide screens. Square + umber per the lab's flat-control convention. -->
+    <div id="view-toggle-home" style="position:absolute;top:1rem;left:1.5rem;z-index:30;"></div>
     <div
       id="view-toggle"
-      style="position:absolute;top:1rem;left:1.5rem;z-index:30;display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);"
+      style="display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);flex-shrink:0;"
     >
       <button
         type="button"
         class="view-toggle-btn"
         data-view="map"
-        style="padding:0.55rem 1rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:#FFFFFF;border:none;cursor:pointer;font-weight:500;"
+        style="padding:0.5rem 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:#FFFFFF;border:none;cursor:pointer;font-weight:500;line-height:1.25;"
       >
         🗺️ Map
       </button>
@@ -67,7 +70,7 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
         type="button"
         class="view-toggle-btn"
         data-view="gallery"
-        style="padding:0.55rem 1rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--card);color:var(--muted);border:none;cursor:pointer;"
+        style="padding:0.5rem 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--card);color:var(--muted);border:none;cursor:pointer;line-height:1.25;"
       >
         🗂️ Gallery
       </button>
@@ -78,9 +81,8 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
       <HomeEarthMap records={mapMarkers} lookups={lookups} />
     </div>
 
-    <!-- Gallery view. Top padding matches the toggle's top:1rem so its filters bar (which
-         reserves margin-left for the toggle) lands on the exact same row as it. -->
-    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:1rem 1.5rem 1.5rem 1.5rem;box-sizing:border-box;">
+    <!-- Gallery view -->
+    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:1.5rem;box-sizing:border-box;">
       <div style="max-width:var(--max-w);margin:0 auto;">
         <OrganizationsGallery records={orgRecords} tagMap={tagMap} showHeader={false} orgCount={orgCount} orgDescription={orgDescription} viewToggle={true} />
       </div>
@@ -95,9 +97,23 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
     function setView(view) {
       const mapView = document.getElementById('map-view');
       const galleryView = document.getElementById('gallery-view');
+      const toggle = document.getElementById('view-toggle');
+      const toggleHome = document.getElementById('view-toggle-home');
+      const toggleAnchor = document.getElementById('view-toggle-anchor');
       const buttons = document.querySelectorAll('.view-toggle-btn');
 
       if (!mapView || !galleryView) return;
+
+      // Move the single toggle element between its two homes instead of duplicating or hiding
+      // it — floating over the map, or a real flex sibling of the gallery filters bar (inside
+      // the same max-width column the cards use, so it aligns with them on any screen width).
+      if (toggle) {
+        if (view === 'gallery' && toggleAnchor) {
+          toggleAnchor.appendChild(toggle);
+        } else if (toggleHome) {
+          toggleHome.appendChild(toggle);
+        }
+      }
 
       if (view === 'gallery') {
         mapView.style.display = 'none';
