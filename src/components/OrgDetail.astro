@@ -91,6 +91,7 @@ const website = getUrl(record);
 const place = getPlace(record);
 const category = getCategory(record);
 const description = getDescription(record);
+const isCaseStudy = String(record.properties['Case Study'] ?? record.properties['case study'] ?? '').toUpperCase() === 'Y';
 
 function slugFor(id: string): string {
   return id.replace(/-/g, '');
@@ -105,7 +106,16 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
 ---
 
 <div>
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;margin-bottom:0.6rem;">
+  {(category || isCaseStudy) && (
+    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+      {category && <Badge size="sm" tone={toneForCategory(category)}>{category}</Badge>}
+      {isCaseStudy && (
+        <span style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);">Case study</span>
+      )}
+    </div>
+  )}
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;margin-bottom:0.4rem;">
     <h2 style={`font-size:clamp(1rem, 2.5vw, ${headingSize});font-weight:500;margin:0;color:var(--fg);line-height:1.2;font-family:var(--sans);letter-spacing:-0.01em;`}>
       {title}
     </h2>
@@ -116,8 +126,8 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
     )}
   </div>
 
-  {category && (
-    <div style="margin-bottom:1rem;"><Badge tone={toneForCategory(category)}>{category}</Badge></div>
+  {place && (
+    <div style="font-size:0.85rem;color:var(--muted);line-height:1.4;margin-bottom:0.75rem;">📍 {place}</div>
   )}
 
   {description && (
@@ -132,12 +142,6 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
   )}
 
   <dl style={`display:grid;grid-template-columns:1fr;gap:${isPanel ? '0.75rem' : '1rem'};margin:0 0 1.5rem 0;`}>
-    {place && (
-      <div style={`display:grid;grid-template-columns:${isPanel ? '100px' : '140px'} 1fr;gap:0.5rem;align-items:start;`}>
-        <dt style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding-top:0.15rem;font-family:var(--mono);">Place</dt>
-        <dd style="margin:0;font-size:0.9rem;color:var(--fg);word-break:break-word;">{place}</dd>
-      </div>
-    )}
     {basicProperties.map(([key, value]) => (
       <div style={`display:grid;grid-template-columns:${isPanel ? '100px' : '140px'} 1fr;gap:0.5rem;align-items:start;`}>
         <dt style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding-top:0.15rem;font-family:var(--mono);">{key}</dt>
@@ -180,7 +184,10 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Activities</h3>
       <div style="display:flex;flex-direction:column;gap:1rem;">
         {activities.map((act) => {
-          const actTagIds: string[] = Array.isArray(act.properties['Tags']) ? act.properties['Tags'] : [];
+          // Activities' relation to ontology tags is named "Ontology", not "Tags" (confirmed
+          // against the live Notion schema) — every activity does have at least one, they just
+          // weren't resolving under the wrong property name.
+          const actTagIds: string[] = Array.isArray(act.properties['Ontology']) ? act.properties['Ontology'] : [];
           const actTags = actTagIds.map((id) => lookups.tags?.get(id)).filter(Boolean) as NormalizedRecord[];
           const actDescription = String(act.properties['Description'] ?? act.properties['description'] ?? '');
           return (

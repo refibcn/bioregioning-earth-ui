@@ -109,7 +109,7 @@ if (missingCoordsRecords.length > 0) {
   <div id="earth-map" style="width:100%;height:100%;" data-markers={JSON.stringify(markers)}></div>
 
   {missingCoordsRecords.length > 0 && (
-    <div style="position:absolute;bottom:0.5rem;right:0.5rem;z-index:15;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
+    <div style="position:absolute;bottom:0.6rem;left:3.25rem;z-index:15;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
       {missingCoordsRecords.length} organization{missingCoordsRecords.length === 1 ? '' : 's'} not shown (missing coordinates)
     </div>
   )}
@@ -193,7 +193,10 @@ if (missingCoordsRecords.length > 0) {
       zoom: markers.length === 1 ? 4 : 2,
     });
 
-    map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+    // Grouped bottom-left (was split bottom-right/bottom-left) — consistent with
+    // HomeEarthMap.astro, and clear of the missing-coordinates note, which now sits to the
+    // right of this stack instead of overlapping it.
+    map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
     map.addControl(new maplibregl.FullscreenControl(), 'bottom-left');
 
     const bounds = new maplibregl.LngLatBounds();
@@ -247,12 +250,15 @@ if (missingCoordsRecords.length > 0) {
         className: 'map-pin-popup',
       }).setHTML(`
         <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
-          <div style="font-weight:600;font-size:0.95rem;color:var(--fg);margin-bottom:0.35rem;">${m.name}</div>
-          ${m.category || (m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.35rem;">
+          ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;margin-bottom:0.3rem;">
             ${m.category ? `<span class="badge badge--sm badge--pill badge--${m.categoryTone}">${m.category}</span>` : ''}
-            ${(m.tags || []).map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
+            ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);">Case study</span>` : ''}
           </div>` : ''}
-          ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;">${m.place}</div>` : ''}
+          <div style="font-weight:600;font-size:0.95rem;color:var(--fg);margin-bottom:0.3rem;">${m.name}</div>
+          ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;margin-bottom:0.3rem;">${m.place}</div>` : ''}
+          ${(m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
+            ${m.tags.map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
+          </div>` : ''}
         </div>
       `);
       marker.setPopup(popup);

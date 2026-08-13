@@ -9,8 +9,12 @@ export interface Props {
   showHeader?: boolean;
   orgCount?: number;
   orgDescription?: string;
+  // When true, embeds the map/gallery view toggle as the first item in the filters bar (home
+  // page only) so toggle + filters read as one sticky header instead of a floating control and
+  // a separate in-flow bar. Clicks call window.__beSetView (exposed by index.astro).
+  viewToggle?: boolean;
 }
-const { records, tagMap, showHeader = true, orgCount, orgDescription = '' } = Astro.props;
+const { records, tagMap, showHeader = true, orgCount, orgDescription = '', viewToggle = false } = Astro.props;
 const base = import.meta.env.BASE_URL;
 
 function getTitle(r: NormalizedRecord): string {
@@ -93,9 +97,16 @@ const count = orgCount ?? cards.length;
     </header>
   )}
 
-  <!-- Filters. Square + umber-bordered per the lab's .field__input pattern (was rounded,
-       neutral border) — Work Item D3. -->
-  <div id="gallery-filters" style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem;padding:0.75rem;border:1px solid var(--border);background:var(--card);align-items:center;">
+  <!-- Filters. Square + umber-bordered per the lab's .field__input pattern. Sticky so it (and
+       the embedded toggle, when present) stay in place while the grid below scrolls, reading as
+       one element rather than a floating control plus a separate bar. -->
+  <div id="gallery-filters" style="position:sticky;top:0;z-index:25;display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.5rem;padding:0.75rem;border:1px solid var(--border);background:var(--card);align-items:center;">
+    {viewToggle && (
+      <div style="display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);flex-shrink:0;">
+        <button type="button" class="view-toggle-btn" data-view="map" style="padding:0.5rem 0.9rem;font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--card);color:var(--muted);border:none;cursor:pointer;">🗺️ Map</button>
+        <button type="button" class="view-toggle-btn" data-view="gallery" style="padding:0.5rem 0.9rem;font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:#FFFFFF;border:none;cursor:pointer;font-weight:500;">🗂️ Gallery</button>
+      </div>
+    )}
     <input
       id="gallery-search"
       type="text"
@@ -107,18 +118,23 @@ const count = orgCount ?? cards.length;
       <option value="">All categories</option>
       {categories.map((c) => <option value={c}>{c}</option>)}
     </select>
-    <select id="gallery-filter-tags" class="field-control">
-      <option value="">All tags</option>
-      {allTags.map((t) => <option value={t}>{t}</option>)}
-    </select>
-    <div style="display:flex;align-items:center;gap:0.4rem;">
-      <span style="font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);white-space:nowrap;">Case study</span>
-      <select id="gallery-filter-case-study" class="field-control">
-        <option value="">All</option>
-        <option value="Y">Case study</option>
-        <option value="N">Not case study</option>
-      </select>
+    <div class="tag-filter-wrap" style="position:relative;">
+      <button type="button" id="gallery-tags-toggle" class="field-control" style="cursor:pointer;white-space:nowrap;">
+        Tags<span id="gallery-tags-count"></span>
+      </button>
+      <div id="gallery-tags-dropdown" style="display:none;position:absolute;top:calc(100% + 0.25rem);left:0;z-index:30;min-width:220px;max-height:280px;overflow-y:auto;background:var(--card);border:1px solid var(--umber);padding:0.5rem;box-shadow:0 4px 16px rgba(42,24,16,0.15);">
+        {allTags.map((t) => (
+          <label style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0.25rem;font-size:0.8rem;color:var(--fg);cursor:pointer;">
+            <input type="checkbox" class="gallery-tag-checkbox" value={t} />
+            {t}
+          </label>
+        ))}
+      </div>
     </div>
+    <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);white-space:nowrap;cursor:pointer;">
+      <input type="checkbox" id="gallery-filter-case-study" />
+      Case study only
+    </label>
     <button id="gallery-filter-reset" class="field-control" style="color:var(--muted);font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;">
       Reset
     </button>
@@ -137,18 +153,17 @@ const count = orgCount ?? cards.length;
         data-case-study={c.caseStudy ? 'Y' : 'N'}
         style="display:flex;flex-direction:column;gap:0.6rem;padding:1.25rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);text-decoration:none;color:var(--fg);transition:transform 0.15s ease,border-color 0.15s ease,box-shadow 0.15s ease;"
       >
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;">
-          <div style="display:flex;flex-direction:column;gap:0.15rem;min-width:0;">
-            <h2 style="margin:0;font-size:1.05rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;">{c.name}</h2>
-            {c.caseStudy && (
-              <span style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);">Case study</span>
-            )}
-          </div>
+        <div>
+          <h2 style="margin:0 0 0.3rem 0;font-size:1.05rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;">{c.name}</h2>
+          {(c.caseStudy || c.category) && (
+            <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+              {c.caseStudy && (
+                <span style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);">Case study</span>
+              )}
+              {c.category && <Badge size="sm" tone={toneForCategory(c.category)}>{c.category}</Badge>}
+            </div>
+          )}
         </div>
-
-        {c.category && (
-          <div><Badge size="sm" tone={toneForCategory(c.category)}>{c.category}</Badge></div>
-        )}
 
         {c.place && (
           <div style="font-size:0.8rem;color:var(--muted);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -212,17 +227,28 @@ const count = orgCount ?? cards.length;
     const root = document.currentScript?.closest('#org-gallery-root') ?? document;
     const searchInput = root.querySelector('#gallery-search');
     const categorySelect = root.querySelector('#gallery-filter-category');
-    const tagsSelect = root.querySelector('#gallery-filter-tags');
-    const caseStudySelect = root.querySelector('#gallery-filter-case-study');
+    const tagsToggle = root.querySelector('#gallery-tags-toggle');
+    const tagsDropdown = root.querySelector('#gallery-tags-dropdown');
+    const tagsCount = root.querySelector('#gallery-tags-count');
+    const tagCheckboxes = root.querySelectorAll('.gallery-tag-checkbox');
+    const caseStudyCheckbox = root.querySelector('#gallery-filter-case-study');
     const resetBtn = root.querySelector('#gallery-filter-reset');
     const cards = root.querySelectorAll('.gallery-card');
     const emptyMsg = root.querySelector('#gallery-empty');
 
+    function selectedTags(): string[] {
+      return Array.from(tagCheckboxes)
+        .filter((cb) => (cb as HTMLInputElement).checked)
+        .map((cb) => (cb as HTMLInputElement).value);
+    }
+
     function applyFilters() {
       const query = (searchInput?.value ?? '').toLowerCase().trim();
       const category = categorySelect?.value ?? '';
-      const tag = tagsSelect?.value ?? '';
-      const caseStudy = caseStudySelect?.value ?? '';
+      const tags = selectedTags();
+      const caseStudyOnly = (caseStudyCheckbox as HTMLInputElement | null)?.checked ?? false;
+
+      if (tagsCount) tagsCount.textContent = tags.length > 0 ? ` (${tags.length})` : '';
 
       let visible = 0;
       cards.forEach((card) => {
@@ -233,10 +259,13 @@ const count = orgCount ?? cards.length;
 
         const matchesSearch = !query || name.includes(query);
         const matchesCategory = !category || cardCategory === category;
-        const matchesTag = !tag || cardTags.includes(tag);
-        const matchesCaseStudy = !caseStudy || cardCaseStudy === caseStudy;
+        // Match-any: a card matching at least one selected tag passes (standard multi-tag filter
+        // behavior — narrowing further to match-all would make combining tags mostly return
+        // nothing, since few orgs share every tag).
+        const matchesTags = tags.length === 0 || tags.some((t) => cardTags.includes(t));
+        const matchesCaseStudy = !caseStudyOnly || cardCaseStudy === 'Y';
 
-        const show = matchesSearch && matchesCategory && matchesTag && matchesCaseStudy;
+        const show = matchesSearch && matchesCategory && matchesTags && matchesCaseStudy;
         (card as HTMLElement).style.display = show ? '' : 'none';
         if (show) visible++;
       });
@@ -246,36 +275,49 @@ const count = orgCount ?? cards.length;
 
     searchInput?.addEventListener('input', applyFilters);
     categorySelect?.addEventListener('change', applyFilters);
-    tagsSelect?.addEventListener('change', applyFilters);
-    caseStudySelect?.addEventListener('change', applyFilters);
+    tagCheckboxes.forEach((cb) => cb.addEventListener('change', applyFilters));
+    caseStudyCheckbox?.addEventListener('change', applyFilters);
+
+    tagsToggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!tagsDropdown) return;
+      (tagsDropdown as HTMLElement).style.display = (tagsDropdown as HTMLElement).style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', (e) => {
+      if (tagsDropdown && !(tagsDropdown as HTMLElement).contains(e.target as Node) && e.target !== tagsToggle) {
+        (tagsDropdown as HTMLElement).style.display = 'none';
+      }
+    });
+
     resetBtn?.addEventListener('click', () => {
       if (searchInput) (searchInput as HTMLInputElement).value = '';
       if (categorySelect) (categorySelect as HTMLSelectElement).value = '';
-      if (tagsSelect) (tagsSelect as HTMLSelectElement).value = '';
-      if (caseStudySelect) (caseStudySelect as HTMLSelectElement).value = '';
+      tagCheckboxes.forEach((cb) => ((cb as HTMLInputElement).checked = false));
+      if (caseStudyCheckbox) (caseStudyCheckbox as HTMLInputElement).checked = false;
       applyFilters();
     });
 
     // Work Item E: welcome-sidebar theme badges dispatch this to pre-filter the gallery by tag.
     window.addEventListener('gallery-filter-tag', ((e: CustomEvent) => {
       const tag = e.detail?.tag;
-      if (!tag || !tagsSelect) return;
-      (tagsSelect as HTMLSelectElement).value = tag;
+      if (!tag) return;
+      const cb = Array.from(tagCheckboxes).find((c) => (c as HTMLInputElement).value === tag) as HTMLInputElement | undefined;
+      if (cb) cb.checked = true;
       applyFilters();
     }) as EventListener);
 
-    // Work Item F2: card click opens the same home-panel sidebar the map uses, instead of a
-    // full page navigation — but only on the home page, where HomeEarthMap exposes
-    // window.__beShowDetail. On the standalone /organizations page (no home panel present),
-    // clicks fall through to the card's normal href navigation.
+    // Work Item F2: card click opens the shared home-panel sidebar (HomeDetailPanel.astro),
+    // which lives outside #map-view/#gallery-view so it isn't hidden by the view toggle — only
+    // available on the home page, where that panel is rendered. On the standalone
+    // /organizations page, clicks fall through to the card's normal href navigation.
     cards.forEach((card) => {
       card.addEventListener('click', (e: MouseEvent) => {
         if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         const id = card.getAttribute('data-id');
-        const beShowDetail = (window as any).__beShowDetail;
-        if (id && typeof beShowDetail === 'function') {
+        const bePanel = (window as any).__bePanel;
+        if (id && bePanel?.showDetailById) {
           e.preventDefault();
-          beShowDetail(id);
+          bePanel.showDetailById(id, card.getAttribute('data-name'));
         }
       });
     });

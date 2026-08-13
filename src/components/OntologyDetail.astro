@@ -52,12 +52,13 @@ const allSources = Array.from(lookups.sources?.values() ?? []);
 
 // Work Item I5: was a brute-force scan across ALL of an activity's properties, matching only
 // this exact record's own id — so a parent theme never picked up activities tagged with one of
-// its children instead of the theme itself. Now targeted at the Tags relation specifically
-// (same field OrgDetail.astro reads for org/activity tags), and climbs down to children too.
+// its children instead of the theme itself. Now targeted at the relation specifically (an
+// activity's ontology-tag relation is named "Ontology" on the live schema, not "Tags" — same
+// field OrgDetail.astro reads for its own activity tags), and climbs down to children too.
 const childIds = children.map((c) => c.id);
 const activityTargetIds = new Set([record.id, ...childIds]);
 function getActTagIds(act: NormalizedRecord): string[] {
-  return Array.isArray(act.properties['Tags']) ? act.properties['Tags'] : [];
+  return Array.isArray(act.properties['Ontology']) ? act.properties['Ontology'] : [];
 }
 const relatedActivities = allActivities.filter((act) => getActTagIds(act).some((id) => activityTargetIds.has(id)));
 const relatedOrganizations = allOrganizations.filter((r) => recordReferencesTarget(r, record.id));
@@ -101,14 +102,24 @@ const sectionHeadingSize = '1.25rem';
     <div style="margin-bottom:1.5rem;">
       <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Activities</h3>
       <div class="ontology-activities-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:0.75rem;">
-        {relatedActivities.map((act) => (
-          <div class="ontology-activity-card" data-tags={getActTagIds(act).join('|')} style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-            <h4 style="margin:0;font-size:0.95rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(act)}</h4>
-            {act.properties['Description'] && (
-              <p style="margin:0.4rem 0 0 0;font-size:0.85rem;color:var(--muted);line-height:1.55;">{String(act.properties['Description'])}</p>
-            )}
-          </div>
-        ))}
+        {relatedActivities.map((act) => {
+          const actTags = getActTagIds(act).map((id) => lookups.tags?.get(id)).filter(Boolean) as NormalizedRecord[];
+          return (
+            <div class="ontology-activity-card" data-tags={getActTagIds(act).join('|')} style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
+              <h4 style="margin:0 0 0.4rem 0;font-size:0.95rem;font-weight:600;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">{getTitle(act)}</h4>
+              {actTags.length > 0 && (
+                <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.5rem;">
+                  {actTags.map((tag) => (
+                    <Badge size="sm" shape="square" icon={tag.icon}>{humanize(getTitle(tag))}</Badge>
+                  ))}
+                </div>
+              )}
+              {act.properties['Description'] && (
+                <p style="margin:0;font-size:0.85rem;color:var(--muted);line-height:1.55;">{String(act.properties['Description'])}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   )}

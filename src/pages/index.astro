@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import HomeEarthMap from '../components/HomeEarthMap.astro';
+import HomeDetailPanel from '../components/HomeDetailPanel.astro';
 import OrganizationsGallery from '../components/OrganizationsGallery.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, buildRecordMap } from '../lib/notion';
 import { splitParentsAndChildren } from '../lib/ontology';
@@ -45,20 +46,25 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
 
 <Layout title="Dashboard" description="Explore bioregional actors, projects, and opportunities" hideFooter={true}>
   <main style="padding:0;max-width:none;height:calc(100vh - 48px);position:relative;">
-    <!-- Floating view toggle. Square + umber per the lab's flat-control convention (was
-         rounded + terracotta); position is view-dependent — bottom-left in map view (unchanged),
-         top-left aligned with the gallery filters bar in gallery view (Work Item D). -->
+    <!-- Floating view toggle — map view only (gallery view embeds its own copy inline in the
+         filters bar, see OrganizationsGallery.astro's viewToggle prop, so they read as one
+         element / stay aligned). Always top-left — same position in both views now, not
+         bottom-left in map mode. Square + umber per the lab's flat-control convention. -->
     <div
       id="view-toggle"
-      style="position:absolute;bottom:1rem;top:auto;left:1rem;z-index:30;display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);"
+      style="position:absolute;top:1rem;left:1.5rem;z-index:30;display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);"
     >
       <button
+        type="button"
+        class="view-toggle-btn"
         data-view="map"
         style="padding:0.55rem 1rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:#FFFFFF;border:none;cursor:pointer;font-weight:500;"
       >
         🗺️ Map
       </button>
       <button
+        type="button"
+        class="view-toggle-btn"
         data-view="gallery"
         style="padding:0.55rem 1rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--card);color:var(--muted);border:none;cursor:pointer;"
       >
@@ -68,46 +74,52 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
 
     <!-- Map view -->
     <div id="map-view" style="width:100%;height:100%;">
-      <HomeEarthMap records={mapMarkers} orgCount={orgCount} orgDescription={orgDescription} lookups={lookups} themes={themes} />
+      <HomeEarthMap records={mapMarkers} lookups={lookups} />
     </div>
 
     <!-- Gallery view -->
-    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:3.25rem 1.5rem 1.5rem 1.5rem;box-sizing:border-box;">
+    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:1.5rem;box-sizing:border-box;">
       <div style="max-width:var(--max-w);margin:0 auto;">
-        <OrganizationsGallery records={orgRecords} tagMap={tagMap} showHeader={false} orgCount={orgCount} orgDescription={orgDescription} />
+        <OrganizationsGallery records={orgRecords} tagMap={tagMap} showHeader={false} orgCount={orgCount} orgDescription={orgDescription} viewToggle={true} />
       </div>
     </div>
+
+    <!-- Detail sidebar — sibling of both views (not nested inside #map-view) so it stays
+         visible/openable regardless of which view is active; see HomeDetailPanel.astro. -->
+    <HomeDetailPanel records={mapMarkers} lookups={lookups} orgCount={orgCount} themes={themes} />
   </main>
 
   <script>
     function setView(view) {
       const mapView = document.getElementById('map-view');
       const galleryView = document.getElementById('gallery-view');
-      const buttons = document.querySelectorAll('#view-toggle button');
-      const toggle = document.getElementById('view-toggle');
+      // Includes both the floating toggle (map view) and the copy OrganizationsGallery.astro
+      // embeds inline in its filters bar (gallery view) — both stay in sync since they share
+      // this class regardless of which one is currently visible.
+      const buttons = document.querySelectorAll('.view-toggle-btn');
+      const floatingToggle = document.getElementById('view-toggle');
 
       if (!mapView || !galleryView) return;
 
       if (view === 'gallery') {
         mapView.style.display = 'none';
         galleryView.style.display = 'block';
+        // The panel is now a sibling of both views (fixes it being invisible-but-open when a
+        // gallery card was clicked, since it used to be nested inside #map-view). That
+        // independence means it no longer auto-hides with the map, so close it explicitly —
+        // otherwise the welcome panel sits on top of the gallery by default. Reopens (with
+        // whatever it last showed, welcome or a specific org) when switching back to map.
+        window.__bePanel?.close();
       } else {
         mapView.style.display = 'block';
         galleryView.style.display = 'none';
         window.dispatchEvent(new CustomEvent('view-changed', { detail: { view } }));
+        window.__bePanel?.open();
       }
 
-      if (toggle) {
-        if (view === 'gallery') {
-          toggle.style.top = '1rem';
-          toggle.style.bottom = 'auto';
-          toggle.style.left = '1.5rem';
-        } else {
-          toggle.style.top = 'auto';
-          toggle.style.bottom = '1rem';
-          toggle.style.left = '1rem';
-        }
-      }
+      // The floating toggle only shows in map view — gallery view has its own embedded copy in
+      // the filters bar, so both aren't visible (and clickable) at once.
+      if (floatingToggle) floatingToggle.style.display = view === 'gallery' ? 'none' : 'inline-flex';
 
       buttons.forEach((btn) => {
         const isActive = btn.dataset.view === view;
@@ -116,15 +128,16 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
         btn.style.fontWeight = isActive ? '500' : '400';
       });
     }
-    // Work Item E: exposed so HomeEarthMap.astro's welcome-sidebar theme badges can switch to
-    // gallery view before dispatching the gallery-filter-tag event.
+    // Work Item E: exposed so theme badges (HomeDetailPanel.astro) can switch to gallery view
+    // before dispatching the gallery-filter-tag event. Also called by the embedded toggle in
+    // OrganizationsGallery.astro.
     window.__beSetView = setView;
 
     function readHash() {
       return window.location.hash === '#gallery' ? 'gallery' : 'map';
     }
 
-    document.querySelectorAll('#view-toggle button').forEach((btn) => {
+    document.querySelectorAll('.view-toggle-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const view = btn.dataset.view;
         window.location.hash = view === 'gallery' ? 'gallery' : '';

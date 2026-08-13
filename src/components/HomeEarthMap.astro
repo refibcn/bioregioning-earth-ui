@@ -1,9 +1,9 @@
 ---
+// Map only — the detail sidebar was extracted to HomeDetailPanel.astro (rendered as a sibling
+// in index.astro) so it isn't hidden along with #map-view when the gallery view is active.
 import type { NormalizedRecord } from '../lib/notion';
 import { toneForCategory } from '../lib/notion';
 import { getCoords } from '../lib/geo';
-import OrgDetail from './OrgDetail.astro';
-import Badge from './Badge.astro';
 
 export interface Props {
   records?: Array<{
@@ -13,17 +13,11 @@ export interface Props {
     sectionRoute?: string;
   }>;
   basePath?: string;
-  orgCount?: number;
-  orgDescription?: string;
   lookups?: {
     tags?: Map<string, NormalizedRecord>;
-    activities?: Map<string, NormalizedRecord>;
-    sources?: Map<string, NormalizedRecord>;
-    affiliations?: Map<string, NormalizedRecord>;
   };
-  themes?: NormalizedRecord[];
 }
-const { records = [], basePath = '/', orgCount = 0, orgDescription = '', lookups = {}, themes = [] } = Astro.props;
+const { records = [], basePath = '/', lookups = {} } = Astro.props;
 const base = import.meta.env.BASE_URL;
 
 function getTagNames(props: Record<string, any>): Array<{ name: string; icon?: string }> {
@@ -78,61 +72,16 @@ if (missingCoordsRecords.length > 0) {
   const names = missingCoordsRecords.map((r) => String(r.properties['Name'] ?? r.properties['Title'] ?? r.id)).join(', ');
   console.warn(`[geo] ${missingCoordsRecords.length} record(s) missing coordinates, not shown on map: ${names}`);
 }
-
-const hasLookups = Object.keys(lookups).length > 0;
-const themeCount = themes.length;
 ---
 
 <div style="position:relative;width:100%;height:100%;overflow:hidden;">
   <div id="home-map" style="width:100%;height:100%;" data-markers={JSON.stringify(markers)} data-base={base}></div>
 
   {missingCoordsRecords.length > 0 && (
-    <div style="position:absolute;bottom:0.5rem;left:0.5rem;z-index:15;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
+    <div style="position:absolute;bottom:0.6rem;left:3.25rem;z-index:15;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
       {missingCoordsRecords.length} organization{missingCoordsRecords.length === 1 ? '' : 's'} not shown (missing coordinates)
     </div>
   )}
-
-  <!-- Side panel -->
-  <div
-    id="home-panel"
-    style="position:absolute;top:0.5rem;right:0.5rem;bottom:0.5rem;width:460px;max-width:45%;background:rgba(255,255,255,0.98);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 8px 32px rgba(42,24,16,0.12);font-family:var(--sans);z-index:20;display:flex;flex-direction:column;"
-  >
-    <!-- Header. G6: simplified to one nav control (Close) instead of Back+Close, with
-         "View full page" relocated here from the content row (was a filled button next to
-         "Visit website"), shown only while a detail is open. Returning to the welcome view
-         happens by clicking empty map space (already wired below), same as before. -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);flex-shrink:0;">
-      <a id="panel-viewfull-link" href="#" style="display:none;color:var(--muted);font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;text-decoration:none;" aria-label="View full page">→ View full page</a>
-      <button id="panel-close-btn" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;padding:0;" aria-label="Close panel">✕</button>
-    </div>
-
-    <!-- Scrollable content -->
-    <div id="panel-content" style="padding:1.25rem;overflow-y:auto;flex:1;">
-
-      <!-- Welcome view -->
-      <div id="panel-welcome">
-        <h1 style="font-size:clamp(1.5rem, 2.5vw, 2rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);letter-spacing:-0.01em;line-height:1.2;">Welcome to the Bioregional Knowledge Commons</h1>
-        <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.9rem;line-height:1.55;">This is a public knowledge base documenting organizations and practices at the frontier of bioregional work — exploring how communities around the world are learning to live and govern within the logic of place.</p>
-        <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
-          <strong style="color:var(--fg);">{orgCount}</strong> bioregional actors and initiatives currently mapped{themeCount > 0 && <> across <strong style="color:var(--fg);">{themeCount}</strong> themes:</>}
-        </p>
-        {themeCount > 0 && (
-          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem;">
-            {themes.map((theme) => (
-              <Badge shape="square" size="sm" icon={theme.icon} data-theme-filter={String(theme.properties['Name'] ?? theme.properties['Title'] ?? '').replace(/_/g, ' ')} class="theme-filter-badge">
-                {String(theme.properties['Name'] ?? theme.properties['Title'] ?? '').replace(/_/g, ' ')}
-              </Badge>
-            ))}
-          </div>
-        )}
-
-      </div>
-
-      <!-- Detail view -->
-      <div id="panel-detail" style="display:none;"></div>
-
-    </div>
-  </div>
 </div>
 
 <style is:global>
@@ -151,24 +100,7 @@ const themeCount = themes.length;
     border-top-color: var(--card);
     border-bottom-color: var(--card);
   }
-  .theme-filter-badge { cursor: pointer; }
-  .theme-filter-badge:hover { filter: brightness(0.95); }
 </style>
-
-{hasLookups && (
-  <div style="display:none;">
-    {records.map((r) => {
-      const slug = r.id.replace(/-/g, '');
-      const pathPrefix = r.sectionRoute ? r.sectionRoute.replace(/\/$/, '') : basePath.replace(/\/$/, '');
-      const fullPageHref = `${base}${pathPrefix}/${slug}`;
-      return (
-        <div id={`home-detail-${r.id}`} class="home-detail-template">
-          <OrgDetail record={r} lookups={lookups} mode="panel" fullPageHref={fullPageHref} />
-        </div>
-      );
-    })}
-  </div>
-)}
 
 <script>
   import maplibregl from 'maplibre-gl';
@@ -178,10 +110,7 @@ const themeCount = themes.length;
     const container = document.getElementById('home-map');
     if (!container) return;
 
-    const hasLookups = document.querySelector('.home-detail-template') !== null;
-
     const markers = JSON.parse(container.dataset.markers || '[]');
-    const base = container.dataset.base || '';
 
     if (markers.length === 0) {
       container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:0.9rem;font-family:var(--mono);">No geolocated records to display.</div>';
@@ -209,8 +138,10 @@ const themeCount = themes.length;
       zoom: markers.length === 1 ? 4 : 2,
     });
 
-    map.addControl(new maplibregl.NavigationControl(), 'top-left');
-    map.addControl(new maplibregl.FullscreenControl(), 'top-left');
+    // Map controls grouped bottom-left (was split top-left here / bottom-right+bottom-left in
+    // EarthMap.astro) — now consistent between both map components.
+    map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
+    map.addControl(new maplibregl.FullscreenControl(), 'bottom-left');
     window.addEventListener('view-changed', (e) => {
       if (e.detail?.view === 'map') {
         setTimeout(() => map.resize(), 0);
@@ -218,64 +149,6 @@ const themeCount = themes.length;
     });
 
     const bounds = new maplibregl.LngLatBounds();
-
-    const welcomeDiv = document.getElementById('panel-welcome');
-    const detailDiv = document.getElementById('panel-detail');
-    const viewFullLink = document.getElementById('panel-viewfull-link');
-    const closeBtn = document.getElementById('panel-close-btn');
-    const contentDiv = document.getElementById('panel-content');
-    const panel = document.getElementById('home-panel');
-    let panelOpen = true;
-
-    function showWelcome() {
-      detailDiv.style.display = 'none';
-      welcomeDiv.style.display = 'block';
-      if (viewFullLink) viewFullLink.style.display = 'none';
-      if (contentDiv) contentDiv.scrollTop = 0;
-    }
-
-    function showDetail(m) {
-      openPanel();
-      welcomeDiv.style.display = 'none';
-      if (viewFullLink) {
-        viewFullLink.href = m.href;
-        viewFullLink.style.display = 'inline-block';
-      }
-
-      if (hasLookups) {
-        const template = document.getElementById(`home-detail-${m.id}`);
-        if (template) {
-          detailDiv.innerHTML = template.innerHTML;
-        } else {
-          detailDiv.innerHTML = '<p style="color:var(--muted);">Detail not available.</p>';
-        }
-      } else {
-        detailDiv.innerHTML = `
-          <h2 style="font-size:clamp(1.3rem, 2.5vw, 1.6rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);line-height:1.2;letter-spacing:-0.01em;">${m.name}</h2>
-        `;
-      }
-      detailDiv.style.display = 'block';
-      if (contentDiv) contentDiv.scrollTop = 0;
-    }
-
-    // Work Item F2: exposes this map's showDetail so gallery cards (OrganizationsGallery.astro,
-    // rendered elsewhere in the same DOM on the home page) can open the same sidebar on click
-    // instead of navigating away.
-    window.__beShowDetail = (id) => {
-      const m = markers.find((x) => x.id === id);
-      if (m) showDetail(m);
-    };
-
-    closeBtn?.addEventListener('click', () => {
-      panel.style.display = 'none';
-      panelOpen = false;
-    });
-    panel?.addEventListener('click', (e) => e.stopPropagation());
-
-    function openPanel() {
-      panel.style.display = 'flex';
-      panelOpen = true;
-    }
 
     function placeMarkers() {
       for (const m of markers) {
@@ -292,12 +165,15 @@ const themeCount = themes.length;
           anchor: 'bottom',
         }).setHTML(`
           <div style="padding:0.5rem 0.65rem;font-family:var(--sans);max-width:240px;">
-            <div style="font-weight:600;font-size:1rem;color:var(--fg);margin-bottom:0.35rem;line-height:1.3;">${m.name}</div>
-            ${m.category || (m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.35rem;">
+            ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;margin-bottom:0.3rem;">
               ${m.category ? `<span class="badge badge--sm badge--pill badge--${m.categoryTone}">${m.category}</span>` : ''}
-              ${(m.tags || []).map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
+              ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);">Case study</span>` : ''}
             </div>` : ''}
-            ${m.place ? `<div style="font-size:0.8rem;color:var(--fg);line-height:1.4;">${m.place}</div>` : ''}
+            <div style="font-weight:600;font-size:1rem;color:var(--fg);margin-bottom:0.3rem;line-height:1.3;">${m.name}</div>
+            ${m.place ? `<div style="font-size:0.8rem;color:var(--fg);line-height:1.4;margin-bottom:0.3rem;">${m.place}</div>` : ''}
+            ${(m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
+              ${m.tags.map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
+            </div>` : ''}
           </div>
         `);
         marker.setPopup(popup);
@@ -309,7 +185,7 @@ const themeCount = themes.length;
 
         markerEl.addEventListener('click', (e) => {
           e.stopPropagation();
-          showDetail(m);
+          (window as any).__bePanel?.showDetailById(m.id, m.name);
         });
 
         bounds.extend([m.lng, m.lat]);
@@ -319,7 +195,7 @@ const themeCount = themes.length;
         map.fitBounds(bounds, { padding: 40, maxZoom: 8 });
       }
 
-      map.on('click', showWelcome);
+      map.on('click', () => (window as any).__bePanel?.showWelcome());
     }
 
     if (map.loaded()) {
@@ -336,24 +212,5 @@ const themeCount = themes.length;
     initMap();
   } else {
     window.addEventListener('load', initMap);
-  }
-
-  // Work Item E: welcome-sidebar theme badges switch to gallery view and pre-filter it by that
-  // theme, reusing the gallery's existing tag <select> + applyFilters() rather than inventing a
-  // second filtering mechanism. index.astro exposes setView() as window.__beSetView.
-  function wireThemeBadges() {
-    document.querySelectorAll('.theme-filter-badge').forEach((badge) => {
-      badge.addEventListener('click', () => {
-        const tag = badge.getAttribute('data-theme-filter');
-        if (!tag) return;
-        window.__beSetView?.('gallery');
-        window.dispatchEvent(new CustomEvent('gallery-filter-tag', { detail: { tag } }));
-      });
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', wireThemeBadges);
-  } else {
-    wireThemeBadges();
   }
 </script>
