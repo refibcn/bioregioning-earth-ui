@@ -101,7 +101,10 @@ const count = orgCount ?? cards.length;
        the filters bar — a real flex sibling inside this same max-width column the card grid
        uses below, so the whole row (not a viewport-fixed offset) aligns with the cards on any
        screen width. Sticky as one row so toggle + filters bar move and stay together. -->
-  <div id="gallery-toolbar" style="position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+  <div id="gallery-toolbar" style="position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;">
+    <!-- No gap on the row itself — the toggle's own margin-right (index.astro) provides the
+         gap only when it's actually docked here, so an empty anchor (toggle floating outside on
+         wide screens) doesn't leave a phantom gap before the filters bar. -->
     {viewToggle && <div id="view-toggle-anchor" style="display:flex;flex-shrink:0;"></div>}
     <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);background:var(--card);align-items:center;">
       <input

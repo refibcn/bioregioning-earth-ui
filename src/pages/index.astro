@@ -56,7 +56,7 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
     <div id="view-toggle-home" style="position:absolute;top:1rem;left:1.5rem;z-index:30;"></div>
     <div
       id="view-toggle"
-      style="display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);flex-shrink:0;"
+      style="display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);flex-shrink:0;margin-right:0.75rem;"
     >
       <button
         type="button"
@@ -94,26 +94,33 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
   </main>
 
   <script>
-    function setView(view) {
-      const mapView = document.getElementById('map-view');
-      const galleryView = document.getElementById('gallery-view');
+    // Below this viewport width, gallery view has no gutter to the left of the centered
+    // max-width column wide enough to float the toggle outside without overlapping it (toggle
+    // is ~197px; the arithmetic: 1.5rem inset + toggle width + gap must clear 1.5rem gallery
+    // padding + (viewport - 1.5rem*2 - --max-w)/2 of centering gutter — works out to ~1754px,
+    // rounded up here). Above it, the toggle floats outside the filters bar, same as map view;
+    // below it, it becomes a flex sibling in the toolbar row instead — "only interferes with
+    // filters when space is tight," not a fixed threshold on # of view alone.
+    const TOGGLE_WIDE_BREAKPOINT = 1760;
+
+    function placeToggle(view) {
       const toggle = document.getElementById('view-toggle');
       const toggleHome = document.getElementById('view-toggle-home');
       const toggleAnchor = document.getElementById('view-toggle-anchor');
+      if (!toggle) return;
+      const useFloating = view === 'map' || window.innerWidth >= TOGGLE_WIDE_BREAKPOINT;
+      const target = useFloating ? toggleHome : toggleAnchor;
+      if (target && toggle.parentElement !== target) target.appendChild(toggle);
+    }
+
+    function setView(view) {
+      const mapView = document.getElementById('map-view');
+      const galleryView = document.getElementById('gallery-view');
       const buttons = document.querySelectorAll('.view-toggle-btn');
 
       if (!mapView || !galleryView) return;
 
-      // Move the single toggle element between its two homes instead of duplicating or hiding
-      // it — floating over the map, or a real flex sibling of the gallery filters bar (inside
-      // the same max-width column the cards use, so it aligns with them on any screen width).
-      if (toggle) {
-        if (view === 'gallery' && toggleAnchor) {
-          toggleAnchor.appendChild(toggle);
-        } else if (toggleHome) {
-          toggleHome.appendChild(toggle);
-        }
-      }
+      placeToggle(view);
 
       if (view === 'gallery') {
         mapView.style.display = 'none';
@@ -156,6 +163,15 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
     });
 
     window.addEventListener('hashchange', () => setView(readHash()));
+
+    // Re-evaluate the toggle's home on resize too — not just on view change — so dragging the
+    // window across TOGGLE_WIDE_BREAKPOINT while already in gallery view moves it live instead
+    // of only updating on the next map/gallery switch.
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => placeToggle(readHash()), 100);
+    });
 
     setView(readHash());
   </script>
