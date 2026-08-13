@@ -37,6 +37,18 @@ export function hasCoords(props: Record<string, any>): boolean {
   return getCoords(props) !== null;
 }
 
+// Case-study "scope circle" radius on the map — no structured location-shape data exists in
+// Notion (only free text), so this is a manually-set optional override, falling back to one
+// flat default for every case-study org until dialed in per-org. Add a Number property named
+// "Scope Radius (km)" to the Organizations database in Notion to override a specific org.
+export const DEFAULT_SCOPE_RADIUS_KM = 10; // placeholder starting point — tune once real orgs are visible
+
+export function getScopeRadiusKm(props: Record<string, any>): number {
+  const raw = props['Scope Radius (km)'] ?? props['Scope Radius'];
+  const n = Number(raw);
+  return raw != null && !isNaN(n) && n > 0 ? n : DEFAULT_SCOPE_RADIUS_KM;
+}
+
 // Given a list of records, return which ones resolved a coordinate and which didn't — used to
 // surface the "N organizations not shown (missing coordinates)" diagnostic (Work Item A) instead
 // of silently filtering them out.

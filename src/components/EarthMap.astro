@@ -1,6 +1,6 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
-import { getCoords } from '../lib/geo';
+import { getCoords, getScopeRadiusKm } from '../lib/geo';
 import { toneForCategory } from '../lib/notion';
 
 export interface Props {
@@ -71,6 +71,7 @@ const markerResults = records.map((r) => {
   );
   const tags = getTagNames(r.properties).slice(0, 4);
   const categoryTone = category ? toneForCategory(category) : 'neutral';
+  const scopeRadiusKm = getScopeRadiusKm(r.properties);
   return {
     record: r,
     marker: {
@@ -86,12 +87,13 @@ const markerResults = records.map((r) => {
       category,
       categoryTone,
       tags,
+      scopeRadiusKm,
     },
   };
 });
 
 const markers = markerResults.map((m) => m.marker).filter(Boolean) as Array<{
-  id: string; lat: number; lng: number; name: string; href: string; url: string | null; properties: Record<string, any>; caseStudy: string | null; place: string; category: string; categoryTone: string; tags: Array<{ name: string; icon?: string }>;
+  id: string; lat: number; lng: number; name: string; href: string; url: string | null; properties: Record<string, any>; caseStudy: string | null; place: string; category: string; categoryTone: string; tags: Array<{ name: string; icon?: string }>; scopeRadiusKm: number;
 }>;
 
 // Work Item A: orgs without a resolvable lat/lng used to vanish from every map with zero
@@ -133,6 +135,7 @@ if (missingCoordsRecords.length > 0) {
 <script>
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
+  import { createLedMarkerElement, assignCaseStudyColors, colorVarForMarker, addScopeCirclesLayer } from '../lib/mapMarkerStyle';
 
   function renderProperties(props) {
     const entries = Object.entries(props).filter(([key, value]) => {
@@ -239,48 +242,68 @@ if (missingCoordsRecords.length > 0) {
     panelClose?.addEventListener('click', hidePanel);
     panel?.addEventListener('click', (e) => e.stopPropagation());
 
-    for (const m of markers) {
-      const pinColor = m.caseStudy === 'Y' ? '#F0A030' : '#B0A090';
-      const marker = new maplibregl.Marker({ color: pinColor, scale: 0.8 })
-        .setLngLat([m.lng, m.lat])
-        .addTo(map);
+    const colorVarById = assignCaseStudyColors(markers);
 
-      const popup = new maplibregl.Popup({
-        offset: 18,
-        closeButton: false,
-        closeOnClick: false,
-        className: 'map-pin-popup',
-      }).setHTML(`
-        <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
-          ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:0.35rem;margin-bottom:0.3rem;">
-            ${m.category ? `<span class="badge badge--xs badge--pill badge--${m.categoryTone}">${m.category}</span>` : '<span></span>'}
-            ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);">Case study</span>` : ''}
-          </div>` : ''}
-          <div style="font-weight:500;font-size:1.15rem;color:var(--fg);margin-bottom:0.3rem;">${m.name}</div>
-          ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;margin-bottom:0.3rem;">${m.place}</div>` : ''}
-          ${(m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
-            ${m.tags.map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
-          </div>` : ''}
-        </div>
-      `);
-      marker.setPopup(popup);
-
-      const markerEl = marker.getElement();
-      markerEl.style.cursor = 'pointer';
-      markerEl.addEventListener('mouseenter', () => marker.togglePopup());
-      markerEl.addEventListener('mouseleave', () => marker.togglePopup());
-
-      markerEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showPanel(m);
-      });
-
-      bounds.extend([m.lng, m.lat]);
+    // Scope circles need map.addSource/addLayer, which require the style to have finished
+    // loading — unlike plain DOM markers below, which don't and are placed unconditionally
+    // (matching this file's original behavior; gating marker placement itself on 'load' here
+    // turned out to leave every marker unplaced — 'load' wasn't firing reliably in this
+    // particular init path, unlike HomeEarthMap.astro's, so only the part that actually
+    // requires it is gated).
+    if (map.loaded()) {
+      addScopeCirclesLayer(map, markers, colorVarById);
+    } else {
+      map.on('load', () => addScopeCirclesLayer(map, markers, colorVarById));
     }
 
-    if (markers.length > 1) {
-      map.fitBounds(bounds, { padding: 40, maxZoom: 8 });
+    function placeMarkers() {
+      for (const m of markers) {
+        const marker = new maplibregl.Marker({
+          element: createLedMarkerElement(colorVarForMarker(m, colorVarById)),
+          anchor: 'center',
+        })
+          .setLngLat([m.lng, m.lat])
+          .addTo(map);
+
+        const popup = new maplibregl.Popup({
+          offset: 18,
+          closeButton: false,
+          closeOnClick: false,
+          className: 'map-pin-popup',
+        }).setHTML(`
+          <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
+            ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:0.35rem;margin-bottom:0.3rem;">
+              ${m.category ? `<span class="badge badge--xs badge--pill badge--${m.categoryTone}">${m.category}</span>` : '<span></span>'}
+              ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);">Case study</span>` : ''}
+            </div>` : ''}
+            <div style="font-weight:500;font-size:1.15rem;color:var(--fg);margin-bottom:0.3rem;">${m.name}</div>
+            ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;margin-bottom:0.3rem;">${m.place}</div>` : ''}
+            ${(m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
+              ${m.tags.map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
+            </div>` : ''}
+          </div>
+        `);
+        marker.setPopup(popup);
+
+        const markerEl = marker.getElement();
+        markerEl.style.cursor = 'pointer';
+        markerEl.addEventListener('mouseenter', () => marker.togglePopup());
+        markerEl.addEventListener('mouseleave', () => marker.togglePopup());
+
+        markerEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showPanel(m);
+        });
+
+        bounds.extend([m.lng, m.lat]);
+      }
+
+      if (markers.length > 1) {
+        map.fitBounds(bounds, { padding: 40, maxZoom: 8 });
+      }
     }
+
+    placeMarkers();
 
     map.on('click', hidePanel);
   }

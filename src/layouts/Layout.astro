@@ -70,6 +70,19 @@ const navItems = [
         --tone-pink-1: #FF5FB8;   --tone-pink-4: #C40074;   --tone-pink-6: #6E0040;
         --tone-blue-1: #8F97FF;   --tone-blue-4: #3A3AC0;   --tone-blue-6: #1F1D80;
 
+        /* Map marker glow colors — aliases onto the families above, no new hex values. Standard
+           (non-case-study) markers are all one color, the same blue the "Bioregional Organizer"
+           badge already uses. Case-study markers each get one of four distinct colors (assigned
+           by src/lib/mapMarkerStyle.ts so nearby case-study orgs don't collide) — deliberately
+           excludes the blue/neural families so the two marker categories stay visually
+           unambiguous at a glance, and uses each family's "-4" step since "-1" reads washed out
+           and "-6" reads muddy for a glowing dot. */
+        --map-marker-standard: var(--tone-blue-4);
+        --map-marker-case-study-1: var(--pillar-flow-4);
+        --map-marker-case-study-2: var(--pillar-tissue-4);
+        --map-marker-case-study-3: var(--tone-purple-4);
+        --map-marker-case-study-4: var(--tone-pink-4);
+
         --bg: var(--paper-50);
         --surface: var(--paper-100);
         --card: var(--paper-50);                                               /* was a literal #FFFFFF — pure white isn't in the brand at all; refibcn's own "paper" neutral (which this token already aliases) is #fffffd, warm off-white, and that's what every surface should resolve to instead */
@@ -168,6 +181,22 @@ const navItems = [
         font-size: 0.8rem;
         color: var(--fg);
         cursor: pointer;
+      }
+
+      /* Glowing LED map marker — shared by EarthMap.astro and HomeEarthMap.astro (via
+         src/lib/mapMarkerStyle.ts's createLedMarkerElement) so the two map components can't
+         drift into two different marker designs the way other shared UI here already has.
+         Color is set per-instance via the --marker-color custom property, not a class modifier,
+         since case-study markers each need one of four colors, not one fixed color. */
+      .map-led-marker {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        cursor: pointer;
+        background: radial-gradient(circle at 35% 35%, #fff, var(--marker-color) 62%);
+        box-shadow:
+          0 0 6px 2px var(--marker-color),
+          0 0 14px 6px color-mix(in srgb, var(--marker-color) 55%, transparent);
       }
     </style>
   </head>
