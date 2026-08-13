@@ -110,38 +110,44 @@ const count = orgCount ?? cards.length;
          gap only when it's actually docked here, so an empty anchor (toggle floating outside on
          wide screens) doesn't leave a phantom gap before the filters bar. -->
     {viewToggle && <div id="view-toggle-anchor" style="display:flex;flex-shrink:0;"></div>}
-    <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:1.25rem;align-items:center;">
+    <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:1.25rem;">
       <input
         id="gallery-search"
         type="text"
         placeholder="Search by name..."
         class="field-control"
-        style="flex:0 1 320px;min-width:160px;"
+        style="flex:0 0 30%;min-width:160px;"
       />
-      <select id="gallery-filter-category" class="field-control">
-        <option value="">All categories</option>
-        {categories.map((c) => <option value={c}>{c}</option>)}
-      </select>
-      <div class="tag-filter-wrap" style="position:relative;">
-        <button type="button" id="gallery-tags-toggle" class="field-control" style="cursor:pointer;white-space:nowrap;">
-          Tags<span id="gallery-tags-count"></span>
-        </button>
-        <div id="gallery-tags-dropdown" style="display:none;position:absolute;top:calc(100% + 0.25rem);left:0;z-index:30;min-width:220px;max-height:280px;overflow-y:auto;background:var(--card);border:1px solid var(--umber);padding:0.5rem;box-shadow:0 4px 16px rgba(42,24,16,0.15);">
-          {allTags.map((t) => (
-            <label style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0.25rem;font-size:0.8rem;color:var(--fg);cursor:pointer;">
-              <input type="checkbox" class="gallery-tag-checkbox" value={t} />
-              {t}
-            </label>
-          ))}
+      <!-- The rest of the controls share the remaining ~70% of the row (search is capped to
+           30%, not left to dominate at 60%+ like before) and space-between so they spread
+           across it instead of clustering right after search with dead space trailing after
+           Reset — keeps the row filling full width without search hogging it. -->
+      <div style="flex:1;min-width:280px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
+        <select id="gallery-filter-category" class="field-control">
+          <option value="">All categories</option>
+          {categories.map((c) => <option value={c}>{c}</option>)}
+        </select>
+        <div class="tag-filter-wrap" style="position:relative;">
+          <button type="button" id="gallery-tags-toggle" class="field-control" style="cursor:pointer;white-space:nowrap;">
+            Tags<span id="gallery-tags-count"></span>
+          </button>
+          <div id="gallery-tags-dropdown" style="display:none;position:absolute;top:calc(100% + 0.25rem);left:0;z-index:30;min-width:220px;max-height:280px;overflow-y:auto;background:var(--card);border:1px solid var(--umber);padding:0.5rem;box-shadow:0 4px 16px rgba(42,24,16,0.15);">
+            {allTags.map((t) => (
+              <label style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0.25rem;font-size:0.8rem;color:var(--fg);cursor:pointer;">
+                <input type="checkbox" class="gallery-tag-checkbox" value={t} />
+                {t}
+              </label>
+            ))}
+          </div>
         </div>
+        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);white-space:nowrap;cursor:pointer;">
+          <input type="checkbox" id="gallery-filter-case-study" />
+          Case study only
+        </label>
+        <button id="gallery-filter-reset" class="field-control" style="color:var(--muted);font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;">
+          Reset
+        </button>
       </div>
-      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);white-space:nowrap;cursor:pointer;">
-        <input type="checkbox" id="gallery-filter-case-study" />
-        Case study only
-      </label>
-      <button id="gallery-filter-reset" class="field-control" style="color:var(--muted);font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;cursor:pointer;">
-        Reset
-      </button>
     </div>
   </div>
 
