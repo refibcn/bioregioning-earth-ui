@@ -120,18 +120,35 @@ const count = orgCount ?? cards.length;
       />
       <!-- The rest of the controls share the remaining ~70% of the row. Category and Tags grow
            (flex:1) to actually fill that space themselves — wider, more clickable controls —
-           rather than staying at content-width and spacing the gaps out between them. -->
-      <select id="gallery-filter-category" class="field-control" style="flex:1;min-width:160px;">
-        <option value="">All categories</option>
-        {categories.map((c) => <option value={c}>{c}</option>)}
-      </select>
-      <div class="tag-filter-wrap" style="position:relative;flex:1;min-width:160px;">
-        <button type="button" id="gallery-tags-toggle" class="field-control" style="width:100%;cursor:pointer;white-space:nowrap;">
+           rather than staying at content-width and spacing the gaps out between them. Category
+           is now the same custom button+popover pattern as Tags (was a native <select>, whose
+           browser-default chrome — arrow icon, internal padding — can't be fully matched to
+           .field-control via CSS) so the two read as one consistent style, not two different
+           control types sitting side by side. -->
+      <div class="filter-dropdown-wrap" style="position:relative;flex:1;min-width:160px;">
+        <button type="button" id="gallery-category-toggle" class="field-control" style="width:100%;cursor:pointer;white-space:nowrap;text-align:left;">
+          <span id="gallery-category-label">All categories</span>
+        </button>
+        <div id="gallery-category-dropdown" class="filter-dropdown">
+          <label class="filter-dropdown-option">
+            <input type="radio" name="gallery-category-radio" class="gallery-category-radio" value="" checked />
+            All categories
+          </label>
+          {categories.map((c) => (
+            <label class="filter-dropdown-option">
+              <input type="radio" name="gallery-category-radio" class="gallery-category-radio" value={c} />
+              {c}
+            </label>
+          ))}
+        </div>
+      </div>
+      <div class="filter-dropdown-wrap" style="position:relative;flex:1;min-width:160px;">
+        <button type="button" id="gallery-tags-toggle" class="field-control" style="width:100%;cursor:pointer;white-space:nowrap;text-align:left;">
           Tags<span id="gallery-tags-count"></span>
         </button>
-        <div id="gallery-tags-dropdown" style="display:none;position:absolute;top:calc(100% + 0.25rem);left:0;z-index:30;min-width:220px;max-height:280px;overflow-y:auto;background:var(--card);border:1px solid var(--umber);padding:0.5rem;box-shadow:0 4px 16px rgba(42,24,16,0.15);">
+        <div id="gallery-tags-dropdown" class="filter-dropdown">
           {allTags.map((t) => (
-            <label style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0.25rem;font-size:0.8rem;color:var(--fg);cursor:pointer;">
+            <label class="filter-dropdown-option">
               <input type="checkbox" class="gallery-tag-checkbox" value={t} />
               {t}
             </label>
@@ -222,6 +239,35 @@ const count = orgCount ?? cards.length;
     font-family: var(--sans);
     font-size: 0.85rem;
   }
+  /* Category and Tags dropdown popovers — one shared style so they're identical to each other,
+     with the same border color as .field-control (was var(--umber) full-strength on the old
+     tags popover, a mismatch against the input's 45%-mixed border) and the same width as their
+     trigger button (was a fixed min-width:220px, independent of the button's actual — often
+     wider — rendered width). */
+  .filter-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    width: 100%;
+    z-index: 30;
+    max-height: 280px;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid color-mix(in srgb, var(--umber) 45%, transparent);
+    padding: 0.5rem;
+    box-shadow: 0 4px 16px rgba(42, 24, 16, 0.15);
+  }
+  .filter-dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.25rem;
+    font-size: 0.8rem;
+    color: var(--fg);
+    cursor: pointer;
+  }
+
   .field-control:focus-visible {
     outline: 2px solid var(--primary);
     border-color: var(--primary);
@@ -241,7 +287,10 @@ const count = orgCount ?? cards.length;
   (function () {
     const root = document.currentScript?.closest('#org-gallery-root') ?? document;
     const searchInput = root.querySelector('#gallery-search');
-    const categorySelect = root.querySelector('#gallery-filter-category');
+    const categoryToggle = root.querySelector('#gallery-category-toggle');
+    const categoryDropdown = root.querySelector('#gallery-category-dropdown');
+    const categoryLabel = root.querySelector('#gallery-category-label');
+    const categoryRadios = root.querySelectorAll('.gallery-category-radio');
     const tagsToggle = root.querySelector('#gallery-tags-toggle');
     const tagsDropdown = root.querySelector('#gallery-tags-dropdown');
     const tagsCount = root.querySelector('#gallery-tags-count');
@@ -251,6 +300,25 @@ const count = orgCount ?? cards.length;
     const cards = root.querySelectorAll('.gallery-card');
     const emptyMsg = root.querySelector('#gallery-empty');
 
+    // Shared open/close wiring for both dropdown popovers (category, tags) — same pattern,
+    // same style, so they behave identically as well as look identical.
+    function wireDropdown(toggle: Element | null, dropdown: Element | null) {
+      toggle?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!dropdown) return;
+        (dropdown as HTMLElement).style.display = (dropdown as HTMLElement).style.display === 'none' ? 'block' : 'none';
+      });
+      document.addEventListener('click', (e) => {
+        if (dropdown && !(dropdown as HTMLElement).contains(e.target as Node) && e.target !== toggle) {
+          (dropdown as HTMLElement).style.display = 'none';
+        }
+      });
+    }
+
+    function selectedCategory(): string {
+      return (Array.from(categoryRadios).find((r) => (r as HTMLInputElement).checked) as HTMLInputElement | undefined)?.value ?? '';
+    }
+
     function selectedTags(): string[] {
       return Array.from(tagCheckboxes)
         .filter((cb) => (cb as HTMLInputElement).checked)
@@ -259,10 +327,11 @@ const count = orgCount ?? cards.length;
 
     function applyFilters() {
       const query = (searchInput?.value ?? '').toLowerCase().trim();
-      const category = categorySelect?.value ?? '';
+      const category = selectedCategory();
       const tags = selectedTags();
       const caseStudyOnly = (caseStudyCheckbox as HTMLInputElement | null)?.checked ?? false;
 
+      if (categoryLabel) categoryLabel.textContent = category || 'All categories';
       if (tagsCount) tagsCount.textContent = tags.length > 0 ? ` (${tags.length})` : '';
 
       let visible = 0;
@@ -289,24 +358,20 @@ const count = orgCount ?? cards.length;
     }
 
     searchInput?.addEventListener('input', applyFilters);
-    categorySelect?.addEventListener('change', applyFilters);
+    categoryRadios.forEach((r) => r.addEventListener('change', () => {
+      applyFilters();
+      if (categoryDropdown) (categoryDropdown as HTMLElement).style.display = 'none';
+    }));
     tagCheckboxes.forEach((cb) => cb.addEventListener('change', applyFilters));
     caseStudyCheckbox?.addEventListener('change', applyFilters);
 
-    tagsToggle?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!tagsDropdown) return;
-      (tagsDropdown as HTMLElement).style.display = (tagsDropdown as HTMLElement).style.display === 'none' ? 'block' : 'none';
-    });
-    document.addEventListener('click', (e) => {
-      if (tagsDropdown && !(tagsDropdown as HTMLElement).contains(e.target as Node) && e.target !== tagsToggle) {
-        (tagsDropdown as HTMLElement).style.display = 'none';
-      }
-    });
+    wireDropdown(categoryToggle, categoryDropdown);
+    wireDropdown(tagsToggle, tagsDropdown);
 
     resetBtn?.addEventListener('click', () => {
       if (searchInput) (searchInput as HTMLInputElement).value = '';
-      if (categorySelect) (categorySelect as HTMLSelectElement).value = '';
+      const allCategoriesRadio = Array.from(categoryRadios).find((r) => (r as HTMLInputElement).value === '') as HTMLInputElement | undefined;
+      if (allCategoriesRadio) allCategoriesRadio.checked = true;
       tagCheckboxes.forEach((cb) => ((cb as HTMLInputElement).checked = false));
       if (caseStudyCheckbox) (caseStudyCheckbox as HTMLInputElement).checked = false;
       applyFilters();
