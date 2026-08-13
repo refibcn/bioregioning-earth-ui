@@ -78,7 +78,7 @@ if (missingCoordsRecords.length > 0) {
   <div id="home-map" style="width:100%;height:100%;" data-markers={JSON.stringify(markers)} data-base={base}></div>
 
   {missingCoordsRecords.length > 0 && (
-    <div style="position:absolute;bottom:0.6rem;left:3.25rem;z-index:15;padding:0.35rem 0.6rem;background:rgba(255,255,255,0.92);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
+    <div style="position:absolute;bottom:0.6rem;left:3.25rem;z-index:15;padding:0.35rem 0.6rem;background:color-mix(in srgb, var(--paper-50) 92%, transparent);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-size:0.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;">
       {missingCoordsRecords.length} organization{missingCoordsRecords.length === 1 ? '' : 's'} not shown (missing coordinates)
     </div>
   )}

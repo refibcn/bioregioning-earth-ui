@@ -64,7 +64,7 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
         type="button"
         class="view-toggle-btn"
         data-view="map"
-        style="height:100%;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:#FFFFFF;border:none;cursor:pointer;font-weight:500;"
+        style="height:100%;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:var(--paper-50);border:none;cursor:pointer;font-weight:500;"
       >
         🗺️ Map
       </button>
@@ -143,7 +143,7 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
       buttons.forEach((btn) => {
         const isActive = btn.dataset.view === view;
         btn.style.background = isActive ? 'var(--umber)' : 'var(--card)';
-        btn.style.color = isActive ? '#FFFFFF' : 'var(--muted)';
+        btn.style.color = isActive ? 'var(--paper-50)' : 'var(--muted)';
         btn.style.fontWeight = isActive ? '500' : '400';
       });
     }
