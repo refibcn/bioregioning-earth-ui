@@ -8,12 +8,21 @@
 // slot — this only owns the shell and the one behavior that's identical everywhere it's used:
 // how the panel closes (✕ button, Escape key, click-inside doesn't bubble to a page-level
 // click-outside handler).
+// Nav (Layout.astro) is position:sticky at a fixed 48px tall — reused here so a position:fixed
+// panel insets below it instead of overlapping it. Not needed for position:absolute panels: those
+// live inside their own container that's already positioned below the nav (see the position prop
+// doc below), so their top:0.5rem is relative to that container, not the viewport.
+const NAV_HEIGHT = '48px';
+
 export interface Props {
   panelId: string;
   // 'fixed' (default) pins the panel to the viewport, needed on pages that scroll under it
-  // (e.g. the /ontology listing page). 'absolute' is for panels living inside their own
-  // position:relative overlay container that doesn't itself scroll (the home page's map/gallery
-  // view) — the two aren't interchangeable, but every other visual property below is shared.
+  // (e.g. the /ontology listing page — a normal tall page with no height-constrained wrapper, so
+  // an absolutely-positioned panel would just scroll away with the content). 'absolute' is for
+  // panels living inside their own position:relative container that's already sized to fill
+  // exactly the viewport height below the nav and doesn't itself scroll (the home page's
+  // map/gallery view) — the two aren't interchangeable, but every other visual property below
+  // (size, border, radius, shadow, header) is shared regardless of which is used.
   position?: 'fixed' | 'absolute';
   // The home page's panel is visible by default (showing welcome content) the instant the page
   // loads, rather than waiting on index.astro's own script to call open() — that call can race
@@ -21,9 +30,10 @@ export interface Props {
   initiallyOpen?: boolean;
 }
 const { panelId, position = 'fixed', initiallyOpen = false } = Astro.props;
+const topInset = position === 'fixed' ? `calc(${NAV_HEIGHT} + 0.5rem)` : '0.5rem';
 ---
 
-<div id={panelId} class="detail-side-panel" style={`display:${initiallyOpen ? 'flex' : 'none'};position:${position};`}>
+<div id={panelId} class="detail-side-panel" style={`display:${initiallyOpen ? 'flex' : 'none'};position:${position};top:${topInset};`}>
   <div class="detail-side-panel-header">
     <a id={`${panelId}-viewfull`} href="#" class="detail-side-panel-viewfull" aria-label="View full page">→ View full page</a>
     <button id={`${panelId}-close`} type="button" class="detail-side-panel-close" aria-label="Close panel">✕</button>
@@ -35,7 +45,7 @@ const { panelId, position = 'fixed', initiallyOpen = false } = Astro.props;
 
 <style is:global>
   .detail-side-panel {
-    top: 0.5rem;
+    /* top is set per-instance inline (see topInset above) since it depends on position mode. */
     right: 0.5rem;
     bottom: 0.5rem;
     width: 460px;
@@ -47,7 +57,9 @@ const { panelId, position = 'fixed', initiallyOpen = false } = Astro.props;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(42, 24, 16, 0.12);
     font-family: var(--sans);
-    z-index: 100;
+    /* Below the nav's z-index:50 (Layout.astro) so it can never render on top of it, even at
+       viewport sizes where the panel would otherwise reach that high. */
+    z-index: 40;
     flex-direction: column;
   }
   .detail-side-panel-header {
