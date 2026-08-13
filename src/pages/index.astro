@@ -46,10 +46,11 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
 
 <Layout title="Dashboard" description="Explore bioregional actors, projects, and opportunities" hideFooter={true}>
   <main style="padding:0;max-width:none;height:calc(100vh - 48px);position:relative;">
-    <!-- Floating view toggle — map view only (gallery view embeds its own copy inline in the
-         filters bar, see OrganizationsGallery.astro's viewToggle prop, so they read as one
-         element / stay aligned). Always top-left — same position in both views now, not
-         bottom-left in map mode. Square + umber per the lab's flat-control convention. -->
+    <!-- Floating view toggle — one element, one fixed position (top:1rem;left:1.5rem, relative
+         to <main>), always visible and never moved or restyled by view. Gallery view's filters
+         bar (OrganizationsGallery.astro, viewToggle prop) reserves space to this element's right
+         via margin-left so they read as one row without the toggle being duplicated/embedded
+         inside it. Square + umber per the lab's flat-control convention. -->
     <div
       id="view-toggle"
       style="position:absolute;top:1rem;left:1.5rem;z-index:30;display:inline-flex;gap:0;overflow:hidden;border:1px solid var(--border);border-radius:0;background:var(--card);box-shadow:0 4px 16px rgba(42,24,16,0.15);"
@@ -77,8 +78,9 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
       <HomeEarthMap records={mapMarkers} lookups={lookups} />
     </div>
 
-    <!-- Gallery view -->
-    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:1.5rem;box-sizing:border-box;">
+    <!-- Gallery view. Top padding matches the toggle's top:1rem so its filters bar (which
+         reserves margin-left for the toggle) lands on the exact same row as it. -->
+    <div id="gallery-view" style="display:none;width:100%;height:100%;overflow:auto;padding:1rem 1.5rem 1.5rem 1.5rem;box-sizing:border-box;">
       <div style="max-width:var(--max-w);margin:0 auto;">
         <OrganizationsGallery records={orgRecords} tagMap={tagMap} showHeader={false} orgCount={orgCount} orgDescription={orgDescription} viewToggle={true} />
       </div>
@@ -93,11 +95,7 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
     function setView(view) {
       const mapView = document.getElementById('map-view');
       const galleryView = document.getElementById('gallery-view');
-      // Includes both the floating toggle (map view) and the copy OrganizationsGallery.astro
-      // embeds inline in its filters bar (gallery view) — both stay in sync since they share
-      // this class regardless of which one is currently visible.
       const buttons = document.querySelectorAll('.view-toggle-btn');
-      const floatingToggle = document.getElementById('view-toggle');
 
       if (!mapView || !galleryView) return;
 
@@ -116,10 +114,6 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
         window.dispatchEvent(new CustomEvent('view-changed', { detail: { view } }));
         window.__bePanel?.open();
       }
-
-      // The floating toggle only shows in map view — gallery view has its own embedded copy in
-      // the filters bar, so both aren't visible (and clickable) at once.
-      if (floatingToggle) floatingToggle.style.display = view === 'gallery' ? 'none' : 'inline-flex';
 
       buttons.forEach((btn) => {
         const isActive = btn.dataset.view === view;
