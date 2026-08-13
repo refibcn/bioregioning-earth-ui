@@ -250,8 +250,8 @@ if (missingCoordsRecords.length > 0) {
         className: 'map-pin-popup',
       }).setHTML(`
         <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
-          ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;margin-bottom:0.3rem;">
-            ${m.category ? `<span class="badge badge--sm badge--pill badge--${m.categoryTone}">${m.category}</span>` : ''}
+          ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:0.35rem;margin-bottom:0.3rem;">
+            ${m.category ? `<span class="badge badge--xs badge--pill badge--${m.categoryTone}">${m.category}</span>` : '<span></span>'}
             ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);">Case study</span>` : ''}
           </div>` : ''}
           <div style="font-weight:600;font-size:0.95rem;color:var(--fg);margin-bottom:0.3rem;">${m.name}</div>

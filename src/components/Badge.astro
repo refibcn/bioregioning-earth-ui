@@ -8,7 +8,7 @@
 // link chips (ontology related-orgs) — four different shapes for what's conceptually the same
 // element.
 export interface Props {
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   shape?: "pill" | "square"; // square is for themes/tags specifically; everything else stays pill
   tone?: "neutral" | "purple" | "pink" | "blue"; // purple/pink/blue are for org type only for now
   icon?: string;   // leading emoji — takes precedence over dot if both given
@@ -66,6 +66,7 @@ const dataAttrs = Object.fromEntries(Object.entries(rest).filter(([k]) => k.star
     background: color-mix(in srgb, var(--tone-blue-1) 40%, var(--paper-50));
   }
 
+  .badge--xs { font-size: 0.6rem; padding: 0.15em 0.5em; }
   .badge--sm { font-size: 0.7rem; padding: 0.2em 0.6em; }
   .badge--md { font-size: 0.8rem; }
   .badge--lg { font-size: 0.9rem; padding: 0.35em 0.85em; }
