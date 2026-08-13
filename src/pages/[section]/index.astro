@@ -29,7 +29,7 @@ const isOntology = section.id === 'ontology';
 const isSources = section.id === 'sources';
 
 let lookups = { tags: new Map(), activities: new Map(), sources: new Map(), affiliations: new Map() };
-let ontologyLookups = { activities: new Map(), organizations: new Map(), sources: new Map() };
+let ontologyLookups = { tags: new Map(), activities: new Map(), organizations: new Map(), sources: new Map() };
 let relatedOrgs: NormalizedRecord[] = [];
 
 const sections = loadSectionConfig();
@@ -62,6 +62,7 @@ let ontologyPageContents: Record<string, OntologyPageContent> = {};
 
 if (isOntology) {
   ontologyLookups = {
+    tags: buildRecordMap(allOntology),
     activities: buildRecordMap(allActivities),
     organizations: buildRecordMap(allOrgs),
     sources: buildRecordMap(allSources),

@@ -140,7 +140,13 @@ const navItems = [
         position: absolute;
         top: calc(100% + 0.25rem);
         left: 0;
-        width: 100%;
+        /* min-width:100% keeps it at least as wide as its trigger button, but the trigger is
+           often just "Tags"/"Organizations" — far narrower than option labels like "Findhorn
+           Watershed Initiative" — so it needs room to grow past that, capped so it doesn't run
+           off-screen. */
+        width: max-content;
+        min-width: 100%;
+        max-width: 320px;
         z-index: 30;
         max-height: 280px;
         overflow-y: auto;
