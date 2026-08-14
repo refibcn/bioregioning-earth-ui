@@ -153,7 +153,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
         <dt style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding-top:0.15rem;font-family:var(--mono);">Network Affiliation</dt>
         <dd style="margin:0;display:flex;flex-wrap:wrap;gap:0.5rem;">
           {affiliationOrgs.map((org) => (
-            <Badge href={`${base}/organizations/${slugFor(org.id)}`}>{getTitle(org)}</Badge>
+            <Badge tone={toneForCategory(getCategory(org))} href={`${base}/organizations/${slugFor(org.id)}`}>{getTitle(org)}</Badge>
           ))}
           {affiliationNames.map((name) => (
             <Badge>{name}</Badge>

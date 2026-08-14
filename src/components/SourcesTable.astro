@@ -1,6 +1,6 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
-import { getUrl } from '../lib/notion';
+import { getUrl, getCategory, toneForCategory } from '../lib/notion';
 import Badge from './Badge.astro';
 
 export interface Props {
@@ -100,7 +100,7 @@ const rows = records.map((r) => {
             {r.linkedOrgs.length > 0 ? (
               <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
                 {r.linkedOrgs.map((org) => (
-                  <Badge size="sm" href={`${base}/organizations/${org.id.replace(/-/g, '')}`}>{getTitle(org)}</Badge>
+                  <Badge size="sm" tone={toneForCategory(getCategory(org))} href={`${base}/organizations/${org.id.replace(/-/g, '')}`}>{getTitle(org)}</Badge>
                 ))}
               </div>
             ) : (
