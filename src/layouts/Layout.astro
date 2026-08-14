@@ -107,8 +107,8 @@ const navItems = [
         --border: var(--paper-200);
         --fg: var(--paper-900);
         --muted: var(--paper-700);
-        --primary: var(--terracotta);                                          /* was pillar-flow-4 — refibcn moved primary off the flow pillar 2026-08-07, partly to fix a contrast failure the flow-orange primary had */
-        --primary-hover: color-mix(in srgb, var(--terracotta) 82%, black 18%);  /* was pillar-flow-6 */
+        --primary: var(--lib-lime-6);                                          /* was --terracotta (2026-08-14) — user-requested move to "pillar tissue 4" in refibcn's current (post-relock) 1-4 numbering, i.e. the tissue/lime family's Shade step, #2C5A0D — bioregioning-earth-ui's own legacy --pillar-tissue-4 (#6DBF23) is a *different* step under this repo's separate, un-relocked numbering, so --lib-lime-6 (the raw Shade hex, unambiguous either way) is used directly instead */
+        --primary-hover: color-mix(in srgb, var(--lib-lime-6) 82%, black 18%);
         --primary-fg: var(--paper-50);                                         /* was a literal #FFFFFF — refibcn's own --btn-primary-fg resolves to var(--paper), not white, even for text on dark/primary buttons; matching that instead of inventing a pure-white text color the brand doesn't use */
         --accent: var(--pillar-neural-1);
         --accent-fg: var(--pillar-neural-6);
