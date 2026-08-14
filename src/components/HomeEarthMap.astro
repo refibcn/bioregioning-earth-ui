@@ -166,16 +166,18 @@ if (missingCoordsRecords.length > 0) {
           closeButton: false,
           closeOnClick: false,
           className: 'map-pin-popup',
+          maxWidth: '320px', // MapLibre's own default (240px) was overriding the inner div's
+                              // max-width below, which is why tags were getting cut off
           anchor: 'bottom',
         }).setHTML(`
-          <div style="padding:0.5rem 0.65rem;font-family:var(--sans);max-width:240px;">
-            ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:0.35rem;margin-bottom:0.3rem;">
+          <div style="padding:0.85rem 1rem;font-family:var(--sans);max-width:320px;">
+            ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.75rem;">
               ${m.category ? `<span class="badge badge--xs badge--pill badge--${m.categoryTone}">${m.category}</span>` : '<span></span>'}
               ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);"><span class="case-study-dot"></span>Case study</span>` : ''}
             </div>` : ''}
-            <div style="font-weight:500;font-size:1.15rem;color:var(--fg);margin-bottom:0.3rem;line-height:1.3;">${m.name}</div>
-            ${m.place ? `<div style="font-size:0.8rem;color:var(--fg);line-height:1.4;margin-bottom:0.3rem;">${m.place}</div>` : ''}
-            ${(m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
+            <div style="font-weight:500;font-size:1.15rem;color:var(--fg);margin-bottom:0.5rem;line-height:1.3;">${m.name}</div>
+            ${m.place ? `<div style="font-size:0.8rem;color:var(--muted);line-height:1.4;margin-bottom:0.75rem;">📍 ${m.place}</div>` : ''}
+            ${(m.tags && m.tags.length) ? `<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
               ${m.tags.map((t) => `<span class="badge badge--sm badge--square badge--neutral">${t.icon ? t.icon + ' ' : ''}${t.name}</span>`).join('')}
             </div>` : ''}
           </div>
