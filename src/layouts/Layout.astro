@@ -87,25 +87,13 @@ const navItems = [
         --lib-pink-1: #FFE0F2;   --lib-pink-2: #FFB0DE;   --lib-pink-3: #FF5FB8;   --lib-pink-4: #FF1E9C;   --lib-pink-5: #C40074;   --lib-pink-6: #6E0040;
         --lib-gray-1: #F4F4F2;   --lib-gray-2: #E3E3DF;   --lib-gray-3: #C9C9C3;   --lib-gray-4: #9C9C94;   --lib-gray-5: #6B6B63;   --lib-gray-6: #3A3A34;
 
-        /* Map marker glow colors, drawn from the full 10-family library above rather than the
-           narrower --pillar- and --tone- subset (that read as "only pillar colors" once live —
-           it was 4 case-study colors max). Standard (non-case-study) markers stay one color, the
-           same blue the "Bioregional Organizer" badge already uses (--lib-blue-5, identical value
-           to the existing --tone-blue-4). Case-study markers each get one of eight distinct
-           colors — every family except blue (reserved for standard, so the two categories stay
-           unambiguous) and gray (too desaturated to read as a glow) — assigned by
-           src/lib/mapMarkerStyle.ts so nearby case-study orgs don't collide. Step 4 ("Core") is
-           used throughout: more saturated/vivid than steps 1-3, and reads as a cleaner glow than
-           the darker 5/6 steps. */
-        --map-marker-default: var(--lib-blue-5);
-        --map-marker-case-study-1: var(--lib-red-4);
-        --map-marker-case-study-2: var(--lib-orange-4);
-        --map-marker-case-study-3: var(--lib-yellow-4);
-        --map-marker-case-study-4: var(--lib-lime-4);
-        --map-marker-case-study-5: var(--lib-green-4);
-        --map-marker-case-study-6: var(--lib-cyan-4);
-        --map-marker-case-study-7: var(--lib-purple-4);
-        --map-marker-case-study-8: var(--lib-pink-4);
+        /* Map marker glow colors, drawn from the full 10-family library above. Both categories
+           are one uniform color each (not a per-org palette) — standard (non-case-study) markers
+           use the same blue the "Bioregional Organizer" badge already uses (--lib-blue-5,
+           identical value to the existing --tone-blue-4); case-study markers and the small
+           "Case study" indicator dot (.case-study-dot below) both use lime. */
+        --map-marker-standard: var(--lib-blue-5);
+        --map-marker-case-study: var(--lib-lime-4);
 
         --bg: var(--paper-50);
         --surface: var(--paper-100);
@@ -210,8 +198,8 @@ const navItems = [
       /* Glowing LED map marker — shared by EarthMap.astro and HomeEarthMap.astro (via
          src/lib/mapMarkerStyle.ts's createLedMarkerElement) so the two map components can't
          drift into two different marker designs the way other shared UI here already has.
-         Color is set per-instance via the --marker-color custom property, not a class modifier,
-         since case-study markers each need one of eight colors, not one fixed color.
+         Color is set per-instance via the --marker-color custom property (standard vs. case-study)
+         rather than two separate classes, so both share this one rule.
          A solid saturated core with a soft multi-step outward glow — not an off-center white
          highlight blended into the color (that read as a blemish/pimple rather than a light
          source; a real LED's brightest point is its own body, not a separate white dot on it). */
@@ -226,6 +214,21 @@ const navItems = [
           0 0 6px 2px var(--marker-color),
           0 0 14px 6px color-mix(in srgb, var(--marker-color) 50%, transparent),
           0 0 26px 12px color-mix(in srgb, var(--marker-color) 22%, transparent);
+      }
+
+      /* Small "this org is a case study" indicator dot — same lime as the map's case-study
+         markers, so the two read as the same signal wherever they appear (gallery cards, map
+         hover popups, org detail). Deliberately NOT used in filter controls (e.g. the gallery's
+         "Case study only" checkbox) — those are asking a question, not asserting a fact about a
+         specific org, so the dot doesn't belong there. */
+      .case-study-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--map-marker-case-study);
+        margin-right: 0.4em;
+        vertical-align: middle;
       }
     </style>
   </head>

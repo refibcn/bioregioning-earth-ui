@@ -110,7 +110,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
     <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem;">
       {category ? <Badge size="xs" tone={toneForCategory(category)}>{category}</Badge> : <span />}
       {isCaseStudy && (
-        <span style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);">Case study</span>
+        <span style="font-family:var(--mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);"><span class="case-study-dot"></span>Case study</span>
       )}
     </div>
   )}

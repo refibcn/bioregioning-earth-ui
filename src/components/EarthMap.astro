@@ -135,7 +135,7 @@ if (missingCoordsRecords.length > 0) {
 <script>
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { createLedMarkerElement, assignCaseStudyColors, colorVarForMarker, addScopeCirclesLayer } from '../lib/mapMarkerStyle';
+  import { createLedMarkerElement, colorVarForMarker, addScopeCirclesLayer } from '../lib/mapMarkerStyle';
 
   function renderProperties(props) {
     const entries = Object.entries(props).filter(([key, value]) => {
@@ -242,8 +242,6 @@ if (missingCoordsRecords.length > 0) {
     panelClose?.addEventListener('click', hidePanel);
     panel?.addEventListener('click', (e) => e.stopPropagation());
 
-    const colorVarById = assignCaseStudyColors(markers);
-
     // Scope circles need map.addSource/addLayer, which require the style to have finished
     // loading — unlike plain DOM markers below, which don't and are placed unconditionally
     // (matching this file's original behavior; gating marker placement itself on 'load' here
@@ -251,15 +249,15 @@ if (missingCoordsRecords.length > 0) {
     // particular init path, unlike HomeEarthMap.astro's, so only the part that actually
     // requires it is gated).
     if (map.loaded()) {
-      addScopeCirclesLayer(map, markers, colorVarById);
+      addScopeCirclesLayer(map, markers);
     } else {
-      map.on('load', () => addScopeCirclesLayer(map, markers, colorVarById));
+      map.on('load', () => addScopeCirclesLayer(map, markers));
     }
 
     function placeMarkers() {
       for (const m of markers) {
         const marker = new maplibregl.Marker({
-          element: createLedMarkerElement(colorVarForMarker(m, colorVarById)),
+          element: createLedMarkerElement(colorVarForMarker(m)),
           anchor: 'center',
         })
           .setLngLat([m.lng, m.lat])
@@ -274,7 +272,7 @@ if (missingCoordsRecords.length > 0) {
           <div style="padding:0.35rem 0.5rem;font-family:var(--sans);max-width:220px;">
             ${m.category || m.caseStudy === 'Y' ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:0.35rem;margin-bottom:0.3rem;">
               ${m.category ? `<span class="badge badge--xs badge--pill badge--${m.categoryTone}">${m.category}</span>` : '<span></span>'}
-              ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);">Case study</span>` : ''}
+              ${m.caseStudy === 'Y' ? `<span style="font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--muted);"><span class="case-study-dot"></span>Case study</span>` : ''}
             </div>` : ''}
             <div style="font-weight:500;font-size:1.15rem;color:var(--fg);margin-bottom:0.3rem;">${m.name}</div>
             ${m.place ? `<div style="font-size:0.75rem;color:var(--fg);line-height:1.4;margin-bottom:0.3rem;">${m.place}</div>` : ''}
