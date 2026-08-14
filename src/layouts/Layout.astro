@@ -180,6 +180,19 @@ const navItems = [
         outline: 2px solid var(--primary);
         border-color: var(--primary);
       }
+      /* Trailing dropdown-indicator arrow for .field-control buttons that open a .filter-dropdown
+         (Category/Tags in OrganizationsGallery.astro, Tags/Organizations in OntologyDetail.astro)
+         — added 2026-08-14; these used to have no indicator at all that they were dropdowns
+         rather than plain buttons (the comment on the old native-<select>-replacement said the
+         browser's own arrow chrome couldn't be matched via CSS, but the replacement never added
+         a substitute of its own). Not applied to every .field-control — the search input and
+         "Reset" button use the same class but aren't dropdown triggers. */
+      .field-control-arrow {
+        margin-left: 0.5rem;
+        font-size: 0.7em;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
       .filter-dropdown {
         display: none;
         position: absolute;
@@ -247,7 +260,7 @@ const navItems = [
       }
     </style>
   </head>
-  <body>
+  <body style="display:flex;flex-direction:column;min-height:100vh;">
     <nav style="position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--paper-50) 92%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);">
       <div style="width:100%;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:48px;gap:1rem;">
         <a href={`${base}/`} style="font-weight:500;font-size:0.95rem;color:var(--fg);white-space:nowrap;font-family:var(--sans);">{siteTitle}</a>
@@ -261,7 +274,17 @@ const navItems = [
         </div>
       </div>
     </nav>
-    <slot />
+    <!-- flex:1 0 auto so this fills whatever vertical space the (flex-column) body has left
+         beyond nav+footer, pushing the footer to the true bottom of the viewport on short pages
+         instead of it riding up right under the content — the classic sticky-footer pattern.
+         Wrapped around <slot/> rather than styling <slot/> itself since a slot isn't a real DOM
+         node Astro can attach styles to, and page content isn't guaranteed to be a single
+         top-level element. Plain <div>, not <main> — some pages (index.astro) already render
+         their own <main> as their top-level slot content, and nesting <main> inside <main> would
+         be an invalid duplicate landmark. -->
+    <div style="flex:1 0 auto;">
+      <slot />
+    </div>
     {!hideFooter && (
       <footer style={`border-top:1px solid var(--border);margin-top:${footerMarginTop};padding:2rem 1.5rem;text-align:center;color:var(--muted);font-size:0.8rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;`}>
         <div style="max-width:var(--max-w);margin:0 auto;display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;align-items:center;">

@@ -107,7 +107,12 @@ const topInset = position === 'fixed' ? `calc(${NAV_HEIGHT} + 0.5rem)` : '0.5rem
     closeBtn?.addEventListener('click', () => {
       panel.style.display = 'none';
     });
-    panel.addEventListener('click', (e) => e.stopPropagation());
+    // No click-stopPropagation here (there used to be one) — the actual click-outside-closes
+    // logic below uses mousedown, not click, so it was never needed for that. What it did do,
+    // as a side effect, was swallow every click inside the panel before it could bubble to
+    // document — silently breaking any consumer's own document-level delegated click handling
+    // for its panel content (e.g. OntologyDetail.astro's Tags/Organizations filter dropdowns,
+    // which worked in full-page mode but were dead on arrival inside this panel — 2026-08-14).
   }
 
   document.addEventListener('keydown', (e) => {

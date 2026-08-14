@@ -128,8 +128,8 @@ const count = orgCount ?? cards.length;
            .field-control via CSS) so the two read as one consistent style, not two different
            control types sitting side by side. -->
       <div class="filter-dropdown-wrap" style="position:relative;flex:1;min-width:160px;">
-        <button type="button" id="gallery-category-toggle" class="field-control" style="width:100%;cursor:pointer;white-space:nowrap;text-align:left;">
-          <span id="gallery-category-label">All categories</span>
+        <button type="button" id="gallery-category-toggle" class="field-control" style="width:100%;cursor:pointer;white-space:nowrap;text-align:left;justify-content:space-between;">
+          <span id="gallery-category-label">All categories</span><span class="field-control-arrow" aria-hidden="true">▾</span>
         </button>
         <div id="gallery-category-dropdown" class="filter-dropdown">
           <label class="filter-dropdown-option">
@@ -145,8 +145,8 @@ const count = orgCount ?? cards.length;
         </div>
       </div>
       <div class="filter-dropdown-wrap" style="position:relative;flex:1;min-width:160px;">
-        <button type="button" id="gallery-tags-toggle" class="field-control" style="width:100%;cursor:pointer;white-space:nowrap;text-align:left;">
-          Tags<span id="gallery-tags-count"></span>
+        <button type="button" id="gallery-tags-toggle" class="field-control" style="width:100%;cursor:pointer;white-space:nowrap;text-align:left;justify-content:space-between;">
+          Tags<span id="gallery-tags-count"></span><span class="field-control-arrow" aria-hidden="true">▾</span>
         </button>
         <div id="gallery-tags-dropdown" class="filter-dropdown">
           {allTags.map((t) => (
@@ -255,11 +255,22 @@ const count = orgCount ?? cards.length;
 
     // Shared open/close wiring for both dropdown popovers (category, tags) — same pattern,
     // same style, so they behave identically as well as look identical.
+    // Every dropdown wired here is tracked so opening one can close the others — otherwise
+    // Category and Tags could both be open at once (2026-08-14).
+    const allDropdowns: HTMLElement[] = [];
+
     function wireDropdown(toggle: Element | null, dropdown: Element | null) {
+      if (dropdown) allDropdowns.push(dropdown as HTMLElement);
       toggle?.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!dropdown) return;
-        (dropdown as HTMLElement).style.display = (dropdown as HTMLElement).style.display === 'none' ? 'block' : 'none';
+        // getComputedStyle, not .style.display — the CSS default is display:none
+        // (Layout.astro), so a never-yet-toggled dropdown's inline style is '', which a plain
+        // `=== 'none'` check misreads as "already open," making the very first click on any
+        // toggle a no-op (2026-08-14 fix).
+        const isOpen = getComputedStyle(dropdown as HTMLElement).display !== 'none';
+        allDropdowns.forEach((dd) => { dd.style.display = 'none'; });
+        (dropdown as HTMLElement).style.display = isOpen ? 'none' : 'block';
       });
       document.addEventListener('click', (e) => {
         if (dropdown && !(dropdown as HTMLElement).contains(e.target as Node) && e.target !== toggle) {

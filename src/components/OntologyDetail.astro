@@ -122,7 +122,7 @@ const orgFilterOptions = Array.from(
           {tagFilterOptions.length > 0 && (
             <div class="ontology-filter-wrap" style="position:relative;">
               <button type="button" class="ontology-tags-filter-toggle field-control" style="cursor:pointer;white-space:nowrap;">
-                Tags<span class="ontology-tags-filter-count"></span>
+                Tags<span class="ontology-tags-filter-count"></span><span class="field-control-arrow" aria-hidden="true">▾</span>
               </button>
               <div class="ontology-tags-filter-dropdown filter-dropdown">
                 {tagFilterOptions.map((t) => (
@@ -137,7 +137,7 @@ const orgFilterOptions = Array.from(
           {orgFilterOptions.length > 0 && (
             <div class="ontology-filter-wrap" style="position:relative;">
               <button type="button" class="ontology-org-filter-toggle field-control" style="cursor:pointer;white-space:nowrap;">
-                Organizations<span class="ontology-org-filter-count"></span>
+                Organizations<span class="ontology-org-filter-count"></span><span class="field-control-arrow" aria-hidden="true">▾</span>
               </button>
               <div class="ontology-org-filter-dropdown filter-dropdown">
                 {orgFilterOptions.map((o) => (
@@ -229,7 +229,22 @@ const orgFilterOptions = Array.from(
       e.stopPropagation();
       const wrap = toggle.closest('.ontology-filter-wrap');
       const dropdown = wrap?.querySelector('.filter-dropdown') as HTMLElement | null;
-      if (dropdown) dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+      if (dropdown) {
+        // getComputedStyle, not .style.display — the CSS default is display:none
+        // (Layout.astro), so a never-yet-toggled dropdown's inline style is '', which a plain
+        // `=== 'none'` check misreads as "already open," making the very first click on any
+        // toggle a no-op (2026-08-14 fix).
+        const isOpen = getComputedStyle(dropdown).display !== 'none';
+        // Close every dropdown in this same instance (Tags and Organizations) before opening
+        // the one just clicked, so at most one is open at a time — scoped to this
+        // .ontology-detail-root, not the whole document, since the ontology listing page keeps
+        // several hidden panel-template instances in the DOM at once (2026-08-14).
+        const root = toggle.closest('.ontology-detail-root') ?? document;
+        root.querySelectorAll('.ontology-filter-wrap .filter-dropdown').forEach((dd) => {
+          (dd as HTMLElement).style.display = 'none';
+        });
+        dropdown.style.display = isOpen ? 'none' : 'block';
+      }
       return;
     }
     // Click outside any open dropdown closes it.
