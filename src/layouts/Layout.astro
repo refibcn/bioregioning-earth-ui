@@ -70,18 +70,42 @@ const navItems = [
         --tone-pink-1: #FF5FB8;   --tone-pink-4: #C40074;   --tone-pink-6: #6E0040;
         --tone-blue-1: #8F97FF;   --tone-blue-4: #3A3AC0;   --tone-blue-6: #1F1D80;
 
-        /* Map marker glow colors — aliases onto the families above, no new hex values. Standard
-           (non-case-study) markers are all one color, the same blue the "Bioregional Organizer"
-           badge already uses. Case-study markers each get one of four distinct colors (assigned
-           by src/lib/mapMarkerStyle.ts so nearby case-study orgs don't collide) — deliberately
-           excludes the blue/neural families so the two marker categories stay visually
-           unambiguous at a glance, and uses each family's "-4" step since "-1" reads washed out
-           and "-6" reads muddy for a glowing dot. */
-        --map-marker-standard: var(--tone-blue-4);
-        --map-marker-case-study-1: var(--pillar-flow-4);
-        --map-marker-case-study-2: var(--pillar-tissue-4);
-        --map-marker-case-study-3: var(--tone-purple-4);
-        --map-marker-case-study-4: var(--tone-pink-4);
+        /* Full Color Library (refibcn.github.io's design-system/colors.astro, 2026-08-07) — 10
+           hue families, 6 fixed steps each (1=Tint … 6=Shade), literal chosen hexes not derived
+           from a tint/shade formula. The --pillar- and --tone- tokens above are a legacy partial
+           port of only 6 of these 10 families at non-sequential step numbers (predating this
+           fuller port, and kept as-is since other code already depends on their exact names) —
+           new code should draw from this instead, since it's the complete set. */
+        --lib-red-1: #FFE0E0;    --lib-red-2: #FFA8A8;    --lib-red-3: #FF4D4D;    --lib-red-4: #E60000;    --lib-red-5: #A30000;    --lib-red-6: #5C0000;
+        --lib-orange-1: #FFECB0; --lib-orange-2: #FFD27B; --lib-orange-3: #FFBB26; --lib-orange-4: #FF7A00; --lib-orange-5: #FF5500; --lib-orange-6: #8A2200;
+        --lib-yellow-1: #FFFBD1; --lib-yellow-2: #FFF67A; --lib-yellow-3: #FFEE00; --lib-yellow-4: #E6D400; --lib-yellow-5: #A69900; --lib-yellow-6: #5C5400;
+        --lib-lime-1: #EFFFB8;   --lib-lime-2: #DFFF80;   --lib-lime-3: #D9FF4A;   --lib-lime-4: #8FE84A;   --lib-lime-5: #6DBF23;   --lib-lime-6: #2C5A0D;
+        --lib-green-1: #D6FFEA;  --lib-green-2: #94FFC7;  --lib-green-3: #33E894;  --lib-green-4: #00B86B;  --lib-green-5: #00804A;  --lib-green-6: #00502E;
+        --lib-cyan-1: #C9F7FF;   --lib-cyan-2: #96F3FF;   --lib-cyan-3: #4DEFFF;   --lib-cyan-4: #00AEFF;   --lib-cyan-5: #0055FF;   --lib-cyan-6: #000FA0;
+        --lib-blue-1: #E8EAFF;   --lib-blue-2: #C2C8FF;   --lib-blue-3: #8F97FF;   --lib-blue-4: #5B62F0;   --lib-blue-5: #3A3AC0;   --lib-blue-6: #1F1D80;
+        --lib-purple-1: #F5E1FF; --lib-purple-2: #E5BBFF; --lib-purple-3: #CE7AFF; --lib-purple-4: #A62FFF; --lib-purple-5: #750FCC; --lib-purple-6: #3D0870;
+        --lib-pink-1: #FFE0F2;   --lib-pink-2: #FFB0DE;   --lib-pink-3: #FF5FB8;   --lib-pink-4: #FF1E9C;   --lib-pink-5: #C40074;   --lib-pink-6: #6E0040;
+        --lib-gray-1: #F4F4F2;   --lib-gray-2: #E3E3DF;   --lib-gray-3: #C9C9C3;   --lib-gray-4: #9C9C94;   --lib-gray-5: #6B6B63;   --lib-gray-6: #3A3A34;
+
+        /* Map marker glow colors, drawn from the full 10-family library above rather than the
+           narrower --pillar- and --tone- subset (that read as "only pillar colors" once live —
+           it was 4 case-study colors max). Standard (non-case-study) markers stay one color, the
+           same blue the "Bioregional Organizer" badge already uses (--lib-blue-5, identical value
+           to the existing --tone-blue-4). Case-study markers each get one of eight distinct
+           colors — every family except blue (reserved for standard, so the two categories stay
+           unambiguous) and gray (too desaturated to read as a glow) — assigned by
+           src/lib/mapMarkerStyle.ts so nearby case-study orgs don't collide. Step 4 ("Core") is
+           used throughout: more saturated/vivid than steps 1-3, and reads as a cleaner glow than
+           the darker 5/6 steps. */
+        --map-marker-default: var(--lib-blue-5);
+        --map-marker-case-study-1: var(--lib-red-4);
+        --map-marker-case-study-2: var(--lib-orange-4);
+        --map-marker-case-study-3: var(--lib-yellow-4);
+        --map-marker-case-study-4: var(--lib-lime-4);
+        --map-marker-case-study-5: var(--lib-green-4);
+        --map-marker-case-study-6: var(--lib-cyan-4);
+        --map-marker-case-study-7: var(--lib-purple-4);
+        --map-marker-case-study-8: var(--lib-pink-4);
 
         --bg: var(--paper-50);
         --surface: var(--paper-100);
@@ -187,16 +211,21 @@ const navItems = [
          src/lib/mapMarkerStyle.ts's createLedMarkerElement) so the two map components can't
          drift into two different marker designs the way other shared UI here already has.
          Color is set per-instance via the --marker-color custom property, not a class modifier,
-         since case-study markers each need one of four colors, not one fixed color. */
+         since case-study markers each need one of eight colors, not one fixed color.
+         A solid saturated core with a soft multi-step outward glow — not an off-center white
+         highlight blended into the color (that read as a blemish/pimple rather than a light
+         source; a real LED's brightest point is its own body, not a separate white dot on it). */
       .map-led-marker {
-        width: 14px;
-        height: 14px;
+        width: 11px;
+        height: 11px;
         border-radius: 50%;
         cursor: pointer;
-        background: radial-gradient(circle at 35% 35%, #fff, var(--marker-color) 62%);
+        background: var(--marker-color);
         box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--marker-color) 60%, white 40%),
           0 0 6px 2px var(--marker-color),
-          0 0 14px 6px color-mix(in srgb, var(--marker-color) 55%, transparent);
+          0 0 14px 6px color-mix(in srgb, var(--marker-color) 50%, transparent),
+          0 0 26px 12px color-mix(in srgb, var(--marker-color) 22%, transparent);
       }
     </style>
   </head>

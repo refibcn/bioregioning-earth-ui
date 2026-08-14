@@ -16,14 +16,21 @@ export interface MapMarkerLike {
   scopeRadiusKm?: number;
 }
 
+// One per hue family in Layout.astro's full 10-family Color Library, minus blue (reserved for
+// the standard-marker color) and gray (too desaturated to read as a glow) — see Layout.astro's
+// --map-marker-case-study-* comment for the full reasoning.
 const CASE_STUDY_COLOR_VARS = [
   '--map-marker-case-study-1',
   '--map-marker-case-study-2',
   '--map-marker-case-study-3',
   '--map-marker-case-study-4',
+  '--map-marker-case-study-5',
+  '--map-marker-case-study-6',
+  '--map-marker-case-study-7',
+  '--map-marker-case-study-8',
 ] as const;
 
-const STANDARD_COLOR_VAR = '--map-marker-standard';
+const STANDARD_COLOR_VAR = '--map-marker-default';
 
 // "Close together" at a country/region-level zoom — a starting point, adjust by eye once real
 // org clustering is visible on the live map.
