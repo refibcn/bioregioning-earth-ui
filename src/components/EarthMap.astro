@@ -16,7 +16,7 @@ export interface Props {
   };
 }
 const { records = [], basePath = '/', lookups = {} } = Astro.props;
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 function getTagNames(props: Record<string, any>): Array<{ name: string; icon?: string }> {
   const ids: string[] = Array.isArray(props['Tags']) ? props['Tags'] : [];

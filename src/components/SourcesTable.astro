@@ -9,7 +9,7 @@ export interface Props {
   relatedOrgs?: NormalizedRecord[];
 }
 const { records, basePath = '/', relatedOrgs = [] } = Astro.props;
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 function getTitle(r: NormalizedRecord): string {
   return String(r.properties['Name'] ?? r.properties['Title'] ?? r.properties['name'] ?? r.properties['title'] ?? 'Untitled');

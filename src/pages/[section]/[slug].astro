@@ -112,7 +112,7 @@ interface Props {
 }
 
 const { record, sectionRoute, sectionName, lookups, children = [], pageContent = EMPTY_ONTOLOGY_CONTENT } = Astro.props;
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const isOrgs = sectionRoute === '/organizations';
 const isOntology = sectionRoute === '/ontology';
 

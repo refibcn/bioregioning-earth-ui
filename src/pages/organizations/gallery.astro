@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import OrganizationsGallery from '../../components/OrganizationsGallery.astro';
 import { loadSectionConfig, loadRelatedDatabases, fetchSectionRecords, fetchDatabaseRecords, fetchActivitiesRecords, buildRecordMap } from '../../lib/notion';
 
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 const sections = loadSectionConfig();
 const related = loadRelatedDatabases();

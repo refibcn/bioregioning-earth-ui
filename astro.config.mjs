@@ -1,10 +1,11 @@
 import { defineConfig } from 'astro/config';
 
-const SITE_URL = 'https://giulioquarta.github.io';
+const SITE_URL = 'https://bioregioning.earth';
 
 export default defineConfig({
   site: SITE_URL,
-  base: '/bioregioning-earth-ui',
+  base: '/', // custom domain serves from the root — was '/bioregioning-earth-ui' for the
+             // default giulioquarta.github.io/bioregioning-earth-ui/ Pages URL
   outDir: './dist',
   srcDir: './src',
 });

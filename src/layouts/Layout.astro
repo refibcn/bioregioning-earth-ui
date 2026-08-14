@@ -12,7 +12,7 @@ export interface Props {
 const { title, description, hideFooter = false, footerMarginTop = '4rem' } = Astro.props;
 const siteTitle = 'Bioregioning Earth';
 const pageTitle = title ? `${title} — ${siteTitle}` : siteTitle;
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 // Active-page highlighting (Work Item B) — computed here via route-prefix matching rather than
 // threading a `current` prop through every page (refibcn's Nav.astro pattern): the
