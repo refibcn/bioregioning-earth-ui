@@ -177,7 +177,20 @@ export function resolveRelations(
 
 export function renderMarkdown(md: string): string {
   if (!md) return '';
-  return md
+
+  // Notion's own export inconsistently uses a single newline (soft return) vs. a real blank-line
+  // paragraph break between a heading and the text that follows it, per-record depending on how
+  // it was originally typed/pasted — this normalizes both to a forced blank line around every
+  // heading BEFORE the heading regexes run, so a heading always becomes its own isolated segment
+  // after the later split(), regardless of which convention the source used. Without this, a
+  // heading glued to its following line by a single \n would end up inside the same paragraph
+  // segment as that line, get wrapped in a <p>, and the browser's HTML parser auto-closes that
+  // <p> as soon as it hits the block-level heading tag inside it — leaving a stray, empty
+  // leading <p> and dumping the heading + a literal "\n" (rendered as <br>, see below) as loose
+  // content outside any paragraph, which is exactly the "extra line" gap this was producing.
+  const normalized = md.replace(/^(#{1,3} .*)$/gim, '\n\n$1\n\n');
+
+  return normalized
     .replace(/^### (.*$)/gim, '<h3 style="font-size:1.1rem;font-weight:500;margin:1.5rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">$1</h3>')
     .replace(/^## (.*$)/gim, '<h2 style="font-size:1.25rem;font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">$1</h2>')
     .replace(/^# (.*$)/gim, '<h1 style="font-size:1.5rem;font-weight:500;margin:2rem 0 1rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;">$1</h1>')
@@ -185,7 +198,14 @@ export function renderMarkdown(md: string): string {
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">$1</a>')
     .split(/\n\s*\n/)
-    .map((p) => p.trim() ? `<p style="font-size:0.95rem;color:var(--fg);line-height:1.6;margin:0 0 0.75rem 0;">${p.replace(/\n/g, '<br>')}</p>` : '')
+    .map((p) => {
+      const trimmed = p.trim();
+      if (!trimmed) return '';
+      // Headings render as-is, never wrapped in a <p> — that wrapping is what triggered the
+      // browser's auto-close-<p>-before-a-block-heading behavior in the first place.
+      if (/^<h[1-3]\b/.test(trimmed)) return trimmed;
+      return `<p style="font-size:0.95rem;color:var(--fg);line-height:1.6;margin:0 0 0.75rem 0;">${trimmed.replace(/\n/g, '<br>')}</p>`;
+    })
     .join('');
 }
 
