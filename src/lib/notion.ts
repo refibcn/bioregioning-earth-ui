@@ -241,7 +241,15 @@ export function getDescription(record: NormalizedRecord): string {
 }
 
 export function getUrl(record: NormalizedRecord): string | null {
-  return record.properties['website'] ?? record.properties['Website'] ?? record.properties['URL'] ?? record.properties['Url'] ?? record.properties['url'] ?? null;
+  // 'link'/'Link' added for Sources — confirmed via a live query that Sources' actual Notion
+  // property is named "link" (lowercase, url-type), not "URL"/"Website" like databases.yaml's
+  // schema comment claims; the org-facing names stay first since orgs do use those.
+  return (
+    record.properties['website'] ?? record.properties['Website'] ??
+    record.properties['URL'] ?? record.properties['Url'] ?? record.properties['url'] ??
+    record.properties['link'] ?? record.properties['Link'] ??
+    null
+  );
 }
 
 export function getPlace(record: NormalizedRecord): string {
