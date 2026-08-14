@@ -163,7 +163,7 @@ const orgFilterOptions = Array.from(
             {a.orgs.length > 0 && (
               <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.6rem;">
                 {a.orgs.map((o) => (
-                  <Badge size="sm" tone={toneForCategory(getCategory(o))} href={`${base}/organizations/${o.id.replace(/-/g, '')}`}>{getTitle(o)}</Badge>
+                  <Badge size="xs" tone={toneForCategory(getCategory(o))} href={`${base}/organizations/${o.id.replace(/-/g, '')}`}>{getTitle(o)}</Badge>
                 ))}
               </div>
             )}
