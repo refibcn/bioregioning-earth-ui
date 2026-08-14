@@ -242,6 +242,19 @@ if (missingCoordsRecords.length > 0) {
     panelClose?.addEventListener('click', hidePanel);
     panel?.addEventListener('click', (e) => e.stopPropagation());
 
+    // Click-outside-closes, same pattern/reasoning as DetailPanel.astro's shared handler (this
+    // panel predates that component and isn't built on it, so it needs its own copy): mousedown
+    // rather than click so it doesn't immediately re-close a panel a marker click just opened,
+    // and the map container itself opts out since a drag-to-pan mousedown shouldn't close the
+    // panel — map.on('click', hidePanel) above already owns closing on an actual map click.
+    document.addEventListener('mousedown', (e) => {
+      if (!panel || panel.style.display === 'none') return;
+      const target = e.target as Node;
+      if (panel.contains(target)) return;
+      if (target instanceof Element && target.closest('#earth-map')) return;
+      hidePanel();
+    });
+
     // Scope circles need map.addSource/addLayer, which require the style to have finished
     // loading — unlike plain DOM markers below, which don't and are placed unconditionally
     // (matching this file's original behavior; gating marker placement itself on 'load' here

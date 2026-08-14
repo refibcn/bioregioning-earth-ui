@@ -76,7 +76,7 @@ if (missingCoordsRecords.length > 0) {
 ---
 
 <div style="position:relative;width:100%;height:100%;overflow:hidden;">
-  <div id="home-map" style="width:100%;height:100%;" data-markers={JSON.stringify(markers)} data-base={base}></div>
+  <div id="home-map" data-panel-outside-click="ignore" style="width:100%;height:100%;" data-markers={JSON.stringify(markers)} data-base={base}></div>
 </div>
 
 <style is:global>

@@ -117,6 +117,26 @@ const topInset = position === 'fixed' ? `calc(${NAV_HEIGHT} + 0.5rem)` : '0.5rem
     });
   });
 
+  // Click-outside-closes, generic to every .detail-side-panel. Uses mousedown rather than click
+  // for two reasons: (1) the click that *opens* a panel (a map marker, gallery card, ontology
+  // theme card — all outside the panel by definition) fires its own listener first, then bubbles
+  // to this one last during the bubble phase — by then the panel is already open, so a click-based
+  // check here would immediately close what just opened. mousedown fires before that open logic
+  // ever runs, so it never sees the panel as open on the same interaction. (2) on a map, a
+  // mousedown that turns into a drag-to-pan shouldn't close the panel — MapLibre's own click event
+  // already distinguishes a real click from a drag and handles panel state itself (see
+  // HomeEarthMap.astro/EarthMap.astro), so map containers opt out here via
+  // data-panel-outside-click="ignore" rather than double-handling the same interaction.
+  document.addEventListener('mousedown', (e) => {
+    const target = e.target as Node;
+    if (target instanceof Element && target.closest('[data-panel-outside-click="ignore"]')) return;
+    document.querySelectorAll<HTMLElement>('.detail-side-panel').forEach((panel) => {
+      if (panel.style.display === 'none') return;
+      if (panel.contains(target)) return;
+      panel.style.display = 'none';
+    });
+  });
+
   function initAll() {
     document.querySelectorAll<HTMLElement>('.detail-side-panel').forEach(initPanel);
   }
