@@ -50,6 +50,7 @@ const navItems = [
            neither change had made it here. */
         --paper-50: #fffdfb;   /* refibcn's --paper, relocked 2026-08-13 (was #fffffd) — one step lighter/warmer, part of a neutrals-wide relock (paper/bone/ivory) so the warmth ratio increases smoothly across the ramp */
         --bone: #fcf8f2;       /* refibcn's --bone, relocked 2026-08-13 (was #faf8f4) — same relock as --paper-50/--paper-100 */
+        --eggshell: color-mix(in srgb, var(--paper-50) 50%, var(--bone) 50%); /* new (2026-08-14) — exactly halfway between --paper-50 and --bone, named to fit the existing paper/bone/ivory material naming. Introduced for hover states (.field-control, .filter-dropdown-option, .view-toggle-btn): a step warmer than the default paper background but a step lighter than --bone itself, so hover reads as a distinct third step rather than jumping straight to a surface color. Derived via color-mix rather than a hand-picked hex so it stays exactly centered if either endpoint relocks again. */
         --paper-100: #fbf5ea;  /* refibcn's --ivory (surface-2), relocked 2026-08-13 (was #f8f4ed) — same relock as --paper-50/--bone */
         --paper-200: #DDD7CF;  /* unchanged — already ~equal to refibcn's --border-subtle rendered on paper */
         --paper-700: color-mix(in srgb, var(--paper-900) 65%, var(--paper-50) 35%); /* was a fixed #41312A (too dark to read as "muted"); now derived the same way refibcn derives --rule/--text-muted, so it tracks --paper-900/50 automatically */
@@ -180,16 +181,37 @@ const navItems = [
         outline: 2px solid var(--primary);
         border-color: var(--primary);
       }
+      /* Hover state (2026-08-14) — every .field-control is clickable (search input aside, which
+         still gets the same treatment for consistency) but none of them changed on hover, so
+         nothing signaled that up front. Deliberately a plain border/background shift, not the
+         --primary treatment — that's reserved for :focus-visible and the "this filter has an
+         active selection" state below, so hover doesn't read as either of those. */
+      .field-control:hover {
+        border-color: color-mix(in srgb, var(--umber) 55%, transparent);
+        background: var(--eggshell);
+      }
+      /* "This filter has a selection" state (2026-08-14) — toggled via JS (classList.toggle)
+         alongside the existing count-label / selected-category-label updates in
+         OrganizationsGallery.astro and OntologyDetail.astro, since those already compute exactly
+         this condition. Distinct from :hover/:focus-visible so a filter with something selected
+         stays visually marked even when the pointer moves away. */
+      .field-control--active {
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 8%, var(--paper-50));
+        color: var(--primary);
+      }
       /* Trailing dropdown-indicator arrow for .field-control buttons that open a .filter-dropdown
          (Category/Tags in OrganizationsGallery.astro, Tags/Organizations in OntologyDetail.astro)
          — added 2026-08-14; these used to have no indicator at all that they were dropdowns
          rather than plain buttons (the comment on the old native-<select>-replacement said the
          browser's own arrow chrome couldn't be matched via CSS, but the replacement never added
-         a substitute of its own). Not applied to every .field-control — the search input and
-         "Reset" button use the same class but aren't dropdown triggers. */
+         a substitute of its own). Sized up the same day (0.7em read as barely-there next to the
+         0.85rem label text) — 1.1em instead, close to full text size rather than a faint hint of
+         one. Not applied to every .field-control — the search input and "Reset" button use the
+         same class but aren't dropdown triggers. */
       .field-control-arrow {
         margin-left: 0.5rem;
-        font-size: 0.7em;
+        font-size: 1.1em;
         color: var(--muted);
         flex-shrink: 0;
       }
@@ -221,6 +243,16 @@ const navItems = [
         font-size: 0.8rem;
         color: var(--fg);
         cursor: pointer;
+      }
+      .filter-dropdown-option:hover {
+        background: var(--eggshell);
+      }
+      /* Checked-option highlight (2026-08-14) — a checked box/radio read almost the same as an
+         unchecked one at this size (0.8rem), easy to lose track of once a few are selected. */
+      .filter-dropdown-option:has(input:checked) {
+        background: color-mix(in srgb, var(--primary) 10%, transparent);
+        color: var(--primary);
+        font-weight: 500;
       }
 
       /* Glowing LED map marker — shared by EarthMap.astro and HomeEarthMap.astro (via

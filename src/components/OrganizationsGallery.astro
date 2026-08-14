@@ -297,6 +297,8 @@ const count = orgCount ?? cards.length;
 
       if (categoryLabel) categoryLabel.textContent = category || 'All categories';
       if (tagsCount) tagsCount.textContent = tags.length > 0 ? ` (${tags.length})` : '';
+      categoryToggle?.classList.toggle('field-control--active', !!category);
+      tagsToggle?.classList.toggle('field-control--active', tags.length > 0);
 
       let visible = 0;
       cards.forEach((card) => {

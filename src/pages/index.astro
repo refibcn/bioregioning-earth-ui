@@ -62,9 +62,9 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
     >
       <button
         type="button"
-        class="view-toggle-btn"
+        class="view-toggle-btn active"
         data-view="map"
-        style="height:100%;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--umber);color:var(--paper-50);border:none;cursor:pointer;font-weight:500;"
+        style="height:100%;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;border:none;cursor:pointer;"
       >
         🗺️ Map
       </button>
@@ -72,11 +72,36 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
         type="button"
         class="view-toggle-btn"
         data-view="gallery"
-        style="height:100%;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;background:var(--card);color:var(--muted);border:none;cursor:pointer;"
+        style="height:100%;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 0.9rem;font-size:0.85rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.03em;border:none;cursor:pointer;"
       >
         🗂️ Gallery
       </button>
     </div>
+
+    <style>
+      /* Active/inactive/hover all live here now, not as JS-set inline styles (2026-08-14) —
+         inline styles beat any stylesheet rule regardless of specificity, so a plain
+         .view-toggle-btn:hover rule couldn't have overridden them; moving the color states into
+         CSS (JS just toggles the .active class) lets :hover work normally. */
+      .view-toggle-btn {
+        background: var(--card);
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .view-toggle-btn:hover {
+        background: var(--eggshell);
+        color: var(--fg);
+      }
+      .view-toggle-btn.active {
+        background: var(--umber);
+        color: var(--paper-50);
+        font-weight: 500;
+      }
+      .view-toggle-btn.active:hover {
+        background: color-mix(in srgb, var(--umber) 88%, white 12%);
+        color: var(--paper-50);
+      }
+    </style>
 
     <!-- Map view -->
     <div id="map-view" style="width:100%;height:100%;">
@@ -141,10 +166,7 @@ const { parents: themes } = splitParentsAndChildren(allOntology);
       }
 
       buttons.forEach((btn) => {
-        const isActive = btn.dataset.view === view;
-        btn.style.background = isActive ? 'var(--umber)' : 'var(--card)';
-        btn.style.color = isActive ? 'var(--paper-50)' : 'var(--muted)';
-        btn.style.fontWeight = isActive ? '500' : '400';
+        btn.classList.toggle('active', btn.dataset.view === view);
       });
     }
     // Work Item E: exposed so theme badges (HomeDetailPanel.astro) can switch to gallery view

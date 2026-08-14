@@ -205,6 +205,8 @@ const orgFilterOptions = Array.from(
     const orgCountEl = root.querySelector('.ontology-org-filter-count');
     if (tagsCountEl) tagsCountEl.textContent = selectedTags.length > 0 ? ` (${selectedTags.length})` : '';
     if (orgCountEl) orgCountEl.textContent = selectedOrgs.length > 0 ? ` (${selectedOrgs.length})` : '';
+    root.querySelector('.ontology-tags-filter-toggle')?.classList.toggle('field-control--active', selectedTags.length > 0);
+    root.querySelector('.ontology-org-filter-toggle')?.classList.toggle('field-control--active', selectedOrgs.length > 0);
 
     grid.querySelectorAll('.ontology-activity-card').forEach((card) => {
       const cardTags = (card.getAttribute('data-tags') ?? '').split('|').filter(Boolean);
