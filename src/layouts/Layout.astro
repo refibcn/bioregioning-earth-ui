@@ -65,10 +65,16 @@ const navItems = [
         /* Categorical tones (2026-08-12) — for badges that need color but aren't pillar-tagged
            (org type/category). Deliberately NOT drawn from the pillar families (lime/cyan/orange)
            so a category badge never reads as a pillar badge. Same Color Library refibcn.github.io
-           uses, Purple/Pink/Blue families this time, at the same Soft/Dark/Shade steps. */
-        --tone-purple-1: #CE7AFF; --tone-purple-4: #750FCC; --tone-purple-6: #3D0870;
-        --tone-pink-1: #FF5FB8;   --tone-pink-4: #C40074;   --tone-pink-6: #6E0040;
-        --tone-blue-1: #8F97FF;   --tone-blue-4: #3A3AC0;   --tone-blue-6: #1F1D80;
+           uses, Purple/Pink/Blue families this time, at the same Soft/Dark/Shade steps.
+           -1 (badge background input, via Badge.astro's color-mix) shifted one step lighter —
+           Light instead of Soft — 2026-08-14, matching refibcn's own pillar-badge relock (same
+           day) for the same legibility reason. -4/-6 (badge text/border) are unchanged; only the
+           background step moved, same as refibcn's relock left its "dark" step alone. Referencing
+           --lib-*-2 here instead of a new literal so this stays visibly tied to "one step lighter
+           than -3/Soft" rather than an arbitrary new hex. */
+        --tone-purple-1: var(--lib-purple-2); --tone-purple-4: #750FCC; --tone-purple-6: #3D0870;
+        --tone-pink-1: var(--lib-pink-2);     --tone-pink-4: #C40074;   --tone-pink-6: #6E0040;
+        --tone-blue-1: var(--lib-blue-2);     --tone-blue-4: #3A3AC0;   --tone-blue-6: #1F1D80;
 
         /* Full Color Library (refibcn.github.io's design-system/colors.astro, 2026-08-07) — 10
            hue families, 6 fixed steps each (1=Tint … 6=Shade), literal chosen hexes not derived
