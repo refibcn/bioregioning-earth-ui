@@ -75,6 +75,11 @@ const navItems = [
         --tone-purple-1: var(--lib-purple-2); --tone-purple-4: #750FCC; --tone-purple-6: #3D0870;
         --tone-pink-1: var(--lib-pink-2);     --tone-pink-4: #C40074;   --tone-pink-6: #6E0040;
         --tone-blue-1: var(--lib-blue-2);     --tone-blue-4: #3A3AC0;   --tone-blue-6: #1F1D80;
+        /* Green (2026-08-14) — added as a 4th categorical tone for the ontology page's
+           "Bioregional Economies" category specifically, so it reads distinctly from the
+           Network Coordination pillar badge (which is lime, an adjacent-but-different hue
+           family) instead of both landing in the same "green" family. */
+        --tone-green-1: var(--lib-green-2);   --tone-green-4: #00804A;  --tone-green-6: #00502E;
 
         /* Full Color Library (refibcn.github.io's design-system/colors.astro, 2026-08-07) — 10
            hue families, 6 fixed steps each (1=Tint … 6=Shade), literal chosen hexes not derived
@@ -94,12 +99,16 @@ const navItems = [
         --lib-gray-1: #F4F4F2;   --lib-gray-2: #E3E3DF;   --lib-gray-3: #C9C9C3;   --lib-gray-4: #9C9C94;   --lib-gray-5: #6B6B63;   --lib-gray-6: #3A3A34;
 
         /* Map marker glow colors, drawn from the full 10-family library above. Both categories
-           are one uniform color each (not a per-org palette) — standard (non-case-study) markers
-           use the same blue the "Bioregional Organizer" badge already uses (--lib-blue-5,
-           identical value to the existing --tone-blue-4); case-study markers and the small
-           "Case study" indicator dot (.case-study-dot below) both use lime. */
-        --map-marker-standard: var(--lib-blue-5);
-        --map-marker-case-study: var(--lib-lime-4);
+           are one uniform color each (not a per-org palette, one glow color for every org
+           regardless of its Type) — standard (non-case-study) markers use the same purple the
+           "Bioregional Organizer" badge uses (--lib-purple-5, identical value to the existing
+           --tone-purple-4) — was blue until 2026-08-14, changed alongside that day's org-type
+           badge reshuffle; case-study markers and the small "Case study" indicator dot
+           (.case-study-dot below) both use yellow — was lime until 2026-08-14, moved off it once
+           the ontology page's Network Coordination pillar badge (also lime) started appearing on
+           the same surfaces, which read as the same color for two unrelated meanings. */
+        --map-marker-standard: var(--lib-purple-5);
+        --map-marker-case-study: var(--lib-yellow-3);
 
         --bg: var(--paper-50);
         --surface: var(--paper-100);
@@ -222,7 +231,7 @@ const navItems = [
           0 0 26px 12px color-mix(in srgb, var(--marker-color) 22%, transparent);
       }
 
-      /* Small "this org is a case study" indicator dot — same lime as the map's case-study
+      /* Small "this org is a case study" indicator dot — same yellow as the map's case-study
          markers, so the two read as the same signal wherever they appear (gallery cards, map
          hover popups, org detail). Deliberately NOT used in filter controls (e.g. the gallery's
          "Case study only" checkbox) — those are asking a question, not asserting a fact about a

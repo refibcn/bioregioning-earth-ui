@@ -1,6 +1,6 @@
 ---
 import type { NormalizedRecord } from '../lib/notion';
-import { humanize } from '../lib/notion';
+import { humanize, getCategory, toneForCategory } from '../lib/notion';
 import { splitParentsAndChildren } from '../lib/ontology';
 import OntologyDetail from './OntologyDetail.astro';
 import Badge from './Badge.astro';
@@ -36,6 +36,42 @@ const { parents, childrenByParent } = splitParentsAndChildren(records);
 
 const hasLookups = Object.keys(lookups).length > 0;
 
+// Category → fixed-tone mapping (2026-08-14) — the site's 3 core pillars (same names
+// PillarBadge.astro on refibcn.github.io uses) plus "Bioregional Economies", the one other
+// Category value known to co-occur with them today. Bioregional Economies is pinned to green
+// (rather than left to the purple/pink/blue hash below) specifically so it doesn't land on the
+// same hue family as the lime Network Coordination/tissue badge. Any category not listed here
+// falls back to the existing purple/pink/blue hash, so it still gets a consistent, distinct
+// color without needing to know the full set of values in advance.
+const FIXED_CATEGORY_TONE: Record<string, 'tissue' | 'neural' | 'flow' | 'green'> = {
+  'Network Coordination': 'tissue',
+  'Collective Intelligence': 'neural',
+  'Regenerative Finance': 'flow',
+  'Bioregional Economies': 'green',
+};
+function toneForOntologyCategory(category: string) {
+  return FIXED_CATEGORY_TONE[category] ?? toneForCategory(category);
+}
+
+// Group parent themes by Category, one row per category, preserving the order the themes
+// already sort in (Sort order then title, from splitParentsAndChildren) — this is what keeps
+// the 3 pillar-category cards first, matching the page's existing order, while giving every
+// other category its own row instead of interleaving mid-grid.
+interface CategoryGroup {
+  category: string;
+  items: NormalizedRecord[];
+}
+const groups: CategoryGroup[] = [];
+const groupIndexByCategory = new Map<string, number>();
+for (const parent of parents) {
+  const category = getCategory(parent) || 'Uncategorized';
+  if (!groupIndexByCategory.has(category)) {
+    groupIndexByCategory.set(category, groups.length);
+    groups.push({ category, items: [] });
+  }
+  groups[groupIndexByCategory.get(category)!].items.push(parent);
+}
+
 function resolveChildren(parentId: string): NormalizedRecord[] {
   return childrenByParent[parentId] ?? [];
 }
@@ -57,36 +93,46 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
 ---
 
 <div id="ontology-gallery-root" style="position:relative;">
-  <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:1.5rem;">
-    {parents.map((parent) => {
-      const slug = parent.id.replace(/-/g, '');
-      const href = `${base}${basePath.replace(/\/$/, '')}/${slug}`;
-      const children = resolveChildren(parent.id);
+  <div style="display:flex;flex-direction:column;gap:1.5rem;">
+    {groups.map((group) => (
+      <div class="ontology-theme-row" style="display:grid;gap:1.5rem;">
+        {group.items.map((parent) => {
+          const slug = parent.id.replace(/-/g, '');
+          const href = `${base}${basePath.replace(/\/$/, '')}/${slug}`;
+          const children = resolveChildren(parent.id);
+          const category = getCategory(parent);
 
-      return (
-        <section
-          class="ontology-parent-card"
-          data-id={parent.id}
-          data-full-href={href}
-          style="display:flex;flex-direction:column;gap:0.6rem;padding:1.25rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);cursor:pointer;"
-        >
-          <div style="display:flex;align-items:center;gap:0.75rem;">
-            <span style="font-size:1.6rem;line-height:1;flex-shrink:0;">{getIcon(parent)}</span>
-            <h2 style="margin:0;font-size:1.25rem;font-weight:500;font-family:var(--sans);letter-spacing:-0.01em;word-break:break-word;overflow-wrap:anywhere;">{humanize(getTitle(parent))}</h2>
-          </div>
-          {getDescription(parent) && (
-            <p style="margin:0;color:var(--muted);font-size:0.9rem;line-height:1.5;">{getDescription(parent)}</p>
-          )}
-          {children.length > 0 && (
-            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem;">
-              {children.map((child) => (
-                <Badge shape="square" icon={getIcon(child)}>{humanize(getTitle(child))}</Badge>
-              ))}
-            </div>
-          )}
-        </section>
-      );
-    })}
+          return (
+            <section
+              class="ontology-parent-card"
+              data-id={parent.id}
+              data-full-href={href}
+              style="display:flex;flex-direction:column;gap:0.6rem;padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);cursor:pointer;transition:transform 0.15s ease,border-color 0.15s ease,box-shadow 0.15s ease;"
+            >
+              {category && (
+                <div style="margin-bottom:0.15rem;">
+                  <Badge size="xs" tone={toneForOntologyCategory(category)}>{category}</Badge>
+                </div>
+              )}
+              <div style="display:flex;align-items:center;gap:0.75rem;">
+                <span style="font-size:1.6rem;line-height:1;flex-shrink:0;">{getIcon(parent)}</span>
+                <h2 style="margin:0;font-size:1.25rem;font-weight:500;font-family:var(--sans);letter-spacing:-0.01em;word-break:break-word;overflow-wrap:anywhere;">{humanize(getTitle(parent))}</h2>
+              </div>
+              {getDescription(parent) && (
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;line-height:1.5;">{getDescription(parent)}</p>
+              )}
+              {children.length > 0 && (
+                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.4rem;">
+                  {children.map((child) => (
+                    <Badge shape="square" icon={getIcon(child)}>{humanize(getTitle(child))}</Badge>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    ))}
   </div>
 
   {/* Hidden detail templates */}
@@ -116,6 +162,39 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
        click-to-populate wiring below is specific to this gallery. -->
   <DetailPanel panelId="ontology-side-panel" />
 </div>
+
+<style>
+  /* Fixed 3-slot grid per category row — deliberately NOT auto-fill/auto-fit: each row is a
+     small, known-size group (2-3 themes), and a short row should show its cards at the same
+     width as a full row, with the leftover slot(s) left empty, rather than stretching cards to
+     fill the row or reserving invisible auto-fill tracks that shrink the real cards. Column
+     count then steps down at these two breakpoints so the page adapts on mobile — this is the
+     first @media usage in the codebase; every other grid here (org gallery, network section)
+     always has enough items to fill each row, so auto-fill's responsiveness was enough for them
+     and this fixed-count case didn't come up before. */
+  .ontology-theme-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (max-width: 900px) {
+    .ontology-theme-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 560px) {
+    .ontology-theme-row {
+      grid-template-columns: repeat(1, 1fr);
+    }
+  }
+
+  /* Same CSS-only hover as .gallery-card (OrganizationsGallery.astro) — a lift + shadow, not an
+     onmouseenter/onmouseleave inline-style toggle, so it can't get stuck on an interrupted
+     mouseleave (fast pointer movement, touch, re-hydration). */
+  .ontology-parent-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--paper-200);
+    box-shadow: 0 4px 20px rgba(42, 24, 16, 0.06);
+  }
+</style>
 
 <script define:vars={{ hasLookups }}>
   (function () {

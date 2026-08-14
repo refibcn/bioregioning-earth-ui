@@ -17,7 +17,7 @@ export interface MapMarkerLike {
 const STANDARD_COLOR_VAR = '--map-marker-standard';
 const CASE_STUDY_COLOR_VAR = '--map-marker-case-study';
 
-// Both marker categories are one uniform color each — standard (blue) and case-study (lime).
+// Both marker categories are one uniform color each — standard (purple) and case-study (yellow).
 export function colorVarForMarker(m: MapMarkerLike): string {
   return m.caseStudy === 'Y' ? CASE_STUDY_COLOR_VAR : STANDARD_COLOR_VAR;
 }
@@ -40,7 +40,7 @@ function radiusPxAtZ0(radiusKm: number, lat: number): number {
 }
 
 export function buildScopeCirclesGeoJSON(markers: MapMarkerLike[]) {
-  const color = getComputedStyle(document.documentElement).getPropertyValue(CASE_STUDY_COLOR_VAR).trim() || '#8FE84A';
+  const color = getComputedStyle(document.documentElement).getPropertyValue(CASE_STUDY_COLOR_VAR).trim() || '#FFEE00';
   return {
     type: 'FeatureCollection' as const,
     features: markers

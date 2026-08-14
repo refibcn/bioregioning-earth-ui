@@ -10,7 +10,7 @@
 export interface Props {
   size?: "xs" | "sm" | "md" | "lg";
   shape?: "pill" | "square"; // square is for themes/tags specifically; everything else stays pill
-  tone?: "neutral" | "purple" | "pink" | "blue"; // purple/pink/blue are for org type only for now
+  tone?: "neutral" | "purple" | "pink" | "blue" | "green" | "tissue" | "neural" | "flow"; // purple/pink/blue/green are for org/ontology category; tissue/neural/flow are the site's 3 pillars (ontology category, 2026-08-14)
   icon?: string;   // leading emoji — takes precedence over dot if both given
   dot?: boolean;
   href?: string;   // renders <a> instead of <span> when the badge is itself a link
@@ -64,6 +64,32 @@ const dataAttrs = Object.fromEntries(Object.entries(rest).filter(([k]) => k.star
     color: var(--tone-blue-6);
     border-color: color-mix(in srgb, var(--tone-blue-4) 55%, transparent);
     background: color-mix(in srgb, var(--tone-blue-1) 40%, var(--paper-50));
+  }
+  .badge--green {
+    color: var(--tone-green-6);
+    border-color: color-mix(in srgb, var(--tone-green-4) 55%, transparent);
+    background: color-mix(in srgb, var(--tone-green-1) 40%, var(--paper-50));
+  }
+
+  /* Pillar tones (2026-08-14) — the site's 3 core pillars (Network Coordination / Collective
+     Intelligence / Regenerative Finance), for the ontology theme cards' Category badge. Same
+     formula as the purple/pink/blue tones above, pointed at the existing --pillar-* tokens
+     (Layout.astro) directly instead of a --tone-* alias, since those tokens already carry the
+     right names. */
+  .badge--tissue {
+    color: var(--pillar-tissue-6);
+    border-color: color-mix(in srgb, var(--pillar-tissue-4) 55%, transparent);
+    background: color-mix(in srgb, var(--pillar-tissue-1) 40%, var(--paper-50));
+  }
+  .badge--neural {
+    color: var(--pillar-neural-6);
+    border-color: color-mix(in srgb, var(--pillar-neural-4) 55%, transparent);
+    background: color-mix(in srgb, var(--pillar-neural-1) 40%, var(--paper-50));
+  }
+  .badge--flow {
+    color: var(--pillar-flow-6);
+    border-color: color-mix(in srgb, var(--pillar-flow-4) 55%, transparent);
+    background: color-mix(in srgb, var(--pillar-flow-1) 40%, var(--paper-50));
   }
 
   .badge--xs { font-size: 0.6rem; padding: 0.15em 0.5em; }

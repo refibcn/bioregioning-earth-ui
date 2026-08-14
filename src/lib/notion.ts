@@ -221,19 +221,21 @@ export function humanize(text: string): string {
 }
 
 // Org type/category badges get color (2026-08-12) — purple/pink/blue, deliberately not the pillar
-// colors, so a category badge never reads as a pillar badge. Category values are open-ended
-// (Notion-driven, not a fixed enum), so instead of a hand-curated lookup this hashes the string to
-// one of the three tones — same category always gets the same color, without needing to know the
-// full set of values in advance.
-const CATEGORY_TONES = ['purple', 'pink', 'blue'] as const;
-export type CategoryTone = (typeof CATEGORY_TONES)[number];
+// colors, so a category badge never reads as a pillar badge. Was a hash of the category string
+// (any value → a consistent but arbitrary one of the three tones) until 2026-08-14, when it was
+// pinned to a fixed lookup instead: Bioregional Organizer is purple, Learning Network is pink,
+// and every other category (Funder, Support Provider, and anything added later) is blue — blue
+// as the catch-all default rather than a 4th tone, since org categories skew heavily toward one
+// or two "everything else" values in practice.
+export type CategoryTone = 'purple' | 'pink' | 'blue';
+
+const FIXED_ORG_CATEGORY_TONE: Record<string, CategoryTone> = {
+  'Bioregional Organizer': 'purple',
+  'Learning Network': 'pink',
+};
 
 export function toneForCategory(category: string): CategoryTone {
-  let hash = 0;
-  for (let i = 0; i < category.length; i++) {
-    hash = (hash * 31 + category.charCodeAt(i)) | 0;
-  }
-  return CATEGORY_TONES[Math.abs(hash) % CATEGORY_TONES.length];
+  return FIXED_ORG_CATEGORY_TONE[category] ?? 'blue';
 }
 
 export function getDescription(record: NormalizedRecord): string {
