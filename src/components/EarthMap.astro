@@ -130,12 +130,33 @@ if (missingCoordsRecords.length > 0) {
   .maplibregl-ctrl-bottom-left {
     margin: 1.5rem !important;
   }
+
+  /* Mobile: hide the zoom/compass/fullscreen control stack — little value on a touch screen
+     (pinch-to-zoom covers it) and it ate into already-tight map space. 767px matches
+     MOBILE_BREAKPOINT (768) in src/lib/viewport.ts. */
+  @media (max-width: 767px) {
+    .maplibregl-ctrl-bottom-left {
+      display: none !important;
+    }
+  }
+
+  /* Mobile: no sidebar at all, same reasoning/threshold as DetailPanel.astro's shared panel (this
+     one predates that component and isn't built on it, so it needs its own copy — see the
+     click-outside-closes comment below for the same predates-DetailPanel note). Marker clicks
+     navigate straight to the record's page instead, see the mobile check in the click handler
+     below. 767px matches MOBILE_BREAKPOINT (768) in src/lib/viewport.ts. */
+  @media (max-width: 767px) {
+    #map-panel {
+      display: none !important;
+    }
+  }
 </style>
 
 <script>
   import maplibregl from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { createLedMarkerElement, colorVarForMarker, addScopeCirclesLayer } from '../lib/mapMarkerStyle';
+  import { isMobileViewport } from '../lib/viewport';
 
   function renderProperties(props) {
     const entries = Object.entries(props).filter(([key, value]) => {
@@ -305,6 +326,10 @@ if (missingCoordsRecords.length > 0) {
 
         markerEl.addEventListener('click', (e) => {
           e.stopPropagation();
+          if (isMobileViewport()) {
+            window.location.href = m.href;
+            return;
+          }
           showPanel(m);
         });
 

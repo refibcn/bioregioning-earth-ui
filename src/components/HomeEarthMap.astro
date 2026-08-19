@@ -85,6 +85,14 @@ if (missingCoordsRecords.length > 0) {
   .maplibregl-ctrl-bottom-left {
     margin: 1.5rem !important;
   }
+  /* Mobile: hide the zoom/compass/fullscreen control stack — same reasoning as EarthMap.astro's
+     copy of this rule (little value on a touch screen, ate into tight map space). 767px matches
+     MOBILE_BREAKPOINT (768) in src/lib/viewport.ts. */
+  @media (max-width: 767px) {
+    .maplibregl-ctrl-bottom-left {
+      display: none !important;
+    }
+  }
   .maplibregl-popup {
     z-index: 30 !important;
   }

@@ -91,7 +91,7 @@ const orgFilterOptions = Array.from(
       ) : (
         <h3 style={`font-size:${sectionHeadingSize};font-weight:500;margin:1.75rem 0 0.75rem 0;color:var(--fg);font-family:var(--sans);letter-spacing:-0.01em;`}>Tag Ontology</h3>
       )}
-      <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:0.75rem;">
+      <div class="ontology-tags-grid" style="display:grid;gap:0.75rem;">
         {children.map((child) => (
           <div style="padding:1rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
             <h4 style="margin:0 0 0.4rem 0;font-size:0.95rem;font-weight:500;font-family:var(--sans);line-height:1.3;word-break:break-word;overflow-wrap:anywhere;color:var(--fg);">
@@ -184,6 +184,24 @@ const orgFilterOptions = Array.from(
     </div>
   )}
 </div>
+
+<style>
+  /* Tag cards keep their desktop multi-column grid; below 768px they collapse to single-column,
+     full-width — matching .ontology-activities-grid (always 1fr, see the Activities section above)
+     so the two sections read as one consistent width instead of the tag cards being noticeably
+     narrower. Also removes the only minmax(240px, …) grid in the codebase without a mobile
+     override, which — combined with this page's own left/right padding — could force the grid
+     wider than very narrow (~320-360px) viewports and overflow the page horizontally. 767px
+     matches MOBILE_BREAKPOINT (768) in src/lib/viewport.ts. */
+  .ontology-tags-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+  @media (max-width: 767px) {
+    .ontology-tags-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
 
 <script>
   // Activities filters (Tags, Organizations) — multi-select checkboxes, match-any within each

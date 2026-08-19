@@ -110,6 +110,13 @@ const count = orgCount ?? cards.length;
          gap only when it's actually docked here, so an empty anchor (toggle floating outside on
          wide screens) doesn't leave a phantom gap before the filters bar. -->
     {viewToggle && <div id="view-toggle-anchor" style="display:flex;flex-shrink:0;"></div>}
+    <!-- Mobile-only "Filters" toggle (hidden by default, see the media query below) — below
+         768px, #gallery-filters collapses behind this button instead of showing inline, and
+         reopens as its own full-width row underneath the toolbar (flex-basis:100% on
+         #gallery-filters), i.e. below the map/gallery toggle rather than squeezed next to it. -->
+    <button type="button" id="gallery-filters-toggle" class="field-control" style="display:none;cursor:pointer;" aria-expanded="false" aria-controls="gallery-filters">
+      Filters<span id="gallery-filters-count"></span><span class="field-control-arrow" aria-hidden="true">▾</span>
+    </button>
     <!-- gap:1rem matches #gallery-grid's own card gap below, so filter-control spacing and
          card spacing read as the same rhythm. -->
     <div id="gallery-filters" style="flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:1rem;">
@@ -234,6 +241,47 @@ const count = orgCount ?? cards.length;
     border-color: var(--paper-200);
     box-shadow: 0 4px 20px rgba(42, 24, 16, 0.06);
   }
+
+  /* Mobile: collapse the whole filters row (search, category, tags, case-study, reset) behind a
+     single "Filters" button so the toolbar row stays just the map/gallery toggle + this button —
+     the filters panel reopens as its own full-width row below that, not squeezed in next to it.
+     767px matches MOBILE_BREAKPOINT (768) in src/lib/viewport.ts. Desktop/tablet (≥768px) is
+     untouched: #gallery-filters-toggle stays display:none and #gallery-filters keeps its normal
+     inline flex-wrap row, no .open gating. */
+  @media (max-width: 767px) {
+    /* Both #gallery-filters-toggle (style="display:none;…") and #gallery-filters
+       (style="display:flex;…align-items:center;…") carry their desktop state as an inline style
+       attribute, which beats a plain stylesheet rule regardless of specificity — every property
+       shared with those inline styles needs !important to actually win below 768px. */
+    #gallery-filters-toggle {
+      display: inline-flex !important;
+    }
+    #gallery-filters {
+      display: none !important;
+      /* Longhand flex-basis alone isn't enough — the inline style sets the *shorthand*
+         flex:1 (flex-grow:1;flex-shrink:1;flex-basis:0%), and a shorthand's expanded
+         longhands still count as that property being inline-set, so flex-basis:100% here lost
+         to the inline flex:1's flex-basis:0% (confirmed via getComputedStyle while testing in
+         Chrome — this container was staying ~170px wide, squeezed into the toolbar row's
+         remaining space instead of wrapping onto its own full-width line below it). Overriding
+         the whole shorthand instead of just the longhand actually wins. */
+      flex: 0 0 100% !important;
+      flex-direction: column;
+      align-items: stretch !important;
+      margin-top: 0.75rem;
+    }
+    #gallery-filters.open {
+      display: flex !important;
+    }
+    /* Reset every direct child's desktop-row sizing (flex:0 0 30%, flex:1, …, all set inline) —
+       in a column flex container flex-basis resolves against height, not width, so leaving those
+       in place risks odd sizing rather than the clean full-width stack this needs. !important is
+       required: inline style always wins over a stylesheet rule of any specificity otherwise. */
+    #gallery-filters > * {
+      flex: none !important;
+      width: 100% !important;
+    }
+  }
 </style>
 
 <script>
@@ -252,6 +300,17 @@ const count = orgCount ?? cards.length;
     const resetBtn = root.querySelector('#gallery-filter-reset');
     const cards = root.querySelectorAll('.gallery-card');
     const emptyMsg = root.querySelector('#gallery-empty');
+    const filtersToggle = root.querySelector('#gallery-filters-toggle');
+    const filtersPanel = root.querySelector('#gallery-filters');
+    const filtersCount = root.querySelector('#gallery-filters-count');
+
+    // Mobile-only "Filters" toggle (see the max-width:767px block in this file's <style> — the
+    // button itself is display:none above that width, so this listener is inert on desktop).
+    filtersToggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = filtersPanel?.classList.toggle('open');
+      filtersToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
 
     // Shared open/close wiring for both dropdown popovers (category, tags) — same pattern,
     // same style, so they behave identically as well as look identical.
@@ -299,6 +358,12 @@ const count = orgCount ?? cards.length;
       if (tagsCount) tagsCount.textContent = tags.length > 0 ? ` (${tags.length})` : '';
       categoryToggle?.classList.toggle('field-control--active', !!category);
       tagsToggle?.classList.toggle('field-control--active', tags.length > 0);
+
+      // Mobile "Filters" toggle count/active-state — mirrors the per-control indicators above,
+      // summed across every filter this button collapses on small screens.
+      const activeFilterCount = (category ? 1 : 0) + tags.length + (caseStudyOnly ? 1 : 0);
+      if (filtersCount) filtersCount.textContent = activeFilterCount > 0 ? ` (${activeFilterCount})` : '';
+      filtersToggle?.classList.toggle('field-control--active', activeFilterCount > 0);
 
       let visible = 0;
       cards.forEach((card) => {

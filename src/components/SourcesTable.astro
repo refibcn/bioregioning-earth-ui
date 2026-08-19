@@ -72,20 +72,20 @@ const rows = records.map((r) => {
 ---
 
 <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);">
-  <table style="width:100%;min-width:800px;border-collapse:collapse;font-size:0.9rem;table-layout:fixed;">
+  <table style="width:100%;min-width:900px;border-collapse:collapse;font-size:0.9rem;table-layout:auto;">
     <thead>
       <tr style="border-bottom:1px solid var(--border);background:var(--surface);">
-        <th style="width:9%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Type</th>
-        <th style="width:16%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Name</th>
-        <th style="width:37%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Description</th>
-        <th style="width:29%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Organizations</th>
+        <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Type</th>
+        <th style="width:16%;min-width:160px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Name</th>
+        <th style="width:34%;min-width:220px;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Description</th>
+        <th style="text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;">Organizations</th>
         <th style="width:9%;text-align:left;padding:0.75rem 1rem;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-weight:500;white-space:nowrap;">Source</th>
       </tr>
     </thead>
     <tbody style="overflow:hidden;background:var(--card);">
       {rows.map((r) => (
         <tr style="border-bottom:1px solid var(--border);overflow:hidden;">
-          <td style="padding:0.6rem 1rem;overflow:hidden;text-overflow:ellipsis;vertical-align:top;">
+          <td style="padding:0.6rem 1rem;vertical-align:top;">
             <Badge size="sm" icon={r.emoji}>{r.type}</Badge>
           </td>
           <td style="padding:0.6rem 1rem;color:var(--fg);font-weight:500;overflow-wrap:anywhere;vertical-align:top;">
@@ -96,9 +96,9 @@ const rows = records.map((r) => {
               {r.description}
             </span>
           </td>
-          <td style="padding:0.6rem 1rem;overflow:hidden;vertical-align:top;">
+          <td style="padding:0.6rem 1rem;vertical-align:top;">
             {r.linkedOrgs.length > 0 ? (
-              <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
+              <div class="sources-org-badges" style="display:flex;flex-wrap:wrap;gap:0.35rem;">
                 {r.linkedOrgs.map((org) => (
                   <Badge size="sm" tone={toneForCategory(getCategory(org))} href={`${base}/organizations/${org.id.replace(/-/g, '')}`}>{getTitle(org)}</Badge>
                 ))}
@@ -117,3 +117,32 @@ const rows = records.map((r) => {
     </tbody>
   </table>
 </div>
+
+<style>
+  /* Type/Organizations used to be fixed-percentage columns (table-layout:fixed) with badges that
+     overflowed them and got hard-clipped mid-character — text-overflow:ellipsis on the parent <td>
+     has no effect on a nested inline-flex badge's own text run. First fix attempt let the badge's
+     own text wrap onto a second line instead, which technically stopped the clipping but looked
+     worse — a badge is a pill shape, not a text block, and a wrapped one reads as broken rather
+     than intentional. The actual fix: table-layout:auto (above) so Type/Organizations size to
+     their real content — badges stay their normal single-line pill shape (Badge.astro's own
+     white-space:nowrap, unchanged) and the column grows to fit instead of clipping or wrapping it.
+     A row's own Organizations list can still wrap onto multiple lines when it doesn't fit
+     (.sources-org-badges is flex-wrap) — that's each badge staying intact, just placed on a new
+     line, not a single badge's text breaking mid-pill. Table min-width (900px, was 800px) and the
+     Name/Description min-widths above are back for the same reason they were needed before:
+     without a floor, auto-layout gives whatever's left after Type/Organizations claim their
+     content-driven space to Name/Description — on a narrow viewport that was squeezing Name down
+     to near nothing, wrapping every word onto its own line. The already-present overflow-x:auto
+     wrapper handles the resulting horizontal scroll on narrow screens, same as it always has. */
+  .sources-org-badges {
+    /* Caps how much a single badge-heavy row can widen the whole column — table-layout:auto sizes
+       a column from its widest *unwrapped* cell content, and a flex-wrap container's own preferred
+       width for that calculation is the sum of every badge on one line (i.e. as if it never
+       wrapped). Without this cap, one row with many linked orgs would blow the column out to fit
+       all of them on a single line, at every other row's expense. 340px comfortably fits every
+       single badge label seen in this dataset on one line; a row with several orgs still wraps
+       within that width exactly as intended. */
+    max-width: 340px;
+  }
+</style>

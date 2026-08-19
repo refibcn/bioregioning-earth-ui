@@ -95,6 +95,18 @@ const topInset = position === 'fixed' ? `calc(${NAV_HEIGHT} + 0.5rem)` : '0.5rem
     overflow-y: auto;
     flex: 1;
   }
+
+  /* Mobile: no sidebar at all — map markers, gallery cards, and ontology cards navigate straight
+     to the item's own page instead (see the mobile checks in HomeDetailPanel.astro's
+     showDetailById and OntologyGallery.astro's card click handler; src/lib/viewport.ts). Open/close
+     is driven by inline style.display from JS, which beats a plain rule, so !important is required
+     here to force it closed regardless of that JS state. 767px matches MOBILE_BREAKPOINT (768) in
+     src/lib/viewport.ts. */
+  @media (max-width: 767px) {
+    .detail-side-panel {
+      display: none !important;
+    }
+  }
 </style>
 
 <script>

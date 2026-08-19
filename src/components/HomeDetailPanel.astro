@@ -45,7 +45,7 @@ for (const r of records) {
 
 <DetailPanel panelId="home-panel" position="absolute" initiallyOpen>
   <div id="panel-welcome">
-    <h1 style="font-size:clamp(1.5rem, 2.5vw, 2rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);letter-spacing:-0.01em;line-height:1.2;">Welcome to Bioregioning Earth– a Bioregional Knowledge Commons</h1>
+    <h1 style="font-size:clamp(1.5rem, 2.5vw, 2rem);font-weight:500;margin:0 0 0.6rem 0;color:var(--fg);letter-spacing:-0.01em;line-height:1.2;">Welcome to Bioregioning Earth</h1>
     <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.9rem;line-height:1.55;">This is a public knowledge base documenting organizations and practices at the frontier of bioregional work — exploring how communities around the world are learning to live and govern within the logic of place.</p>
     <p style="color:var(--muted);margin:0 0 0.75rem 0;font-size:0.75rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.04em;">
       <strong style="color:var(--fg);">{orgCount}</strong> bioregional actors and initiatives currently mapped{themeCount > 0 && <> across <strong style="color:var(--fg);">{themeCount}</strong> themes:</>}
@@ -75,6 +75,12 @@ for (const r of records) {
 )}
 
 <script define:vars={{ hrefById, hasLookups }}>
+  // define:vars scripts are inline (not bundled by Vite) so they can't `import` — src/lib/viewport.ts's
+  // isMobileViewport is duplicated here instead; keep the 768 threshold in sync with that file.
+  function isMobileViewport() {
+    return window.innerWidth < 768;
+  }
+
   function initPanel() {
     const panelEl = document.getElementById('home-panel');
     if (!panelEl) return;
@@ -97,6 +103,14 @@ for (const r of records) {
       if (contentDiv) contentDiv.scrollTop = 0;
     }
     function showDetailById(id, name) {
+      // Mobile: no sidebar at all (DetailPanel.astro forces it hidden via CSS regardless) — go
+      // straight to the item's own page instead. Central to this one function since it's the
+      // shared call path for both the map's marker click (HomeEarthMap.astro) and the gallery's
+      // card click (OrganizationsGallery.astro) on this page.
+      if (isMobileViewport() && hrefById[id]) {
+        window.location.href = hrefById[id];
+        return;
+      }
       open();
       welcomeDiv.style.display = 'none';
       const href = hrefById[id];

@@ -149,7 +149,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
       </div>
     ))}
     {(affiliationOrgs.length > 0 || affiliationNames.length > 0) && (
-      <div style={`display:grid;grid-template-columns:${isPanel ? '100px' : '140px'} 1fr;gap:0.5rem;align-items:start;`}>
+      <div class="org-badge-row" style={`display:grid;grid-template-columns:var(--label-col) 1fr;gap:0.5rem;align-items:start;--label-col:${isPanel ? '100px' : '140px'};`}>
         <dt style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding-top:0.15rem;font-family:var(--mono);">Network Affiliation</dt>
         <dd style="margin:0;display:flex;flex-wrap:wrap;gap:0.5rem;">
           {affiliationOrgs.map((org) => (
@@ -162,7 +162,7 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
       </div>
     )}
     {tags.length > 0 && (
-      <div style={`display:grid;grid-template-columns:${isPanel ? '100px' : '140px'} 1fr;gap:0.5rem;align-items:start;`}>
+      <div class="org-badge-row" style={`display:grid;grid-template-columns:var(--label-col) 1fr;gap:0.5rem;align-items:start;--label-col:${isPanel ? '100px' : '140px'};`}>
         <dt style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding-top:0.15rem;font-family:var(--mono);">Tags</dt>
         <dd style="margin:0;display:flex;flex-wrap:wrap;gap:0.5rem;">
           {tags.map((tag) => (
@@ -254,3 +254,18 @@ const sectionHeadingSize = '1.25rem'; // match markdown h2 size from renderMarkd
 
 
 </div>
+
+<style>
+  /* Network Affiliation / Tags rows: side-by-side with a fixed-width label column
+     (100px panel / 140px page, set via --label-col above) on desktop. Below 768px that fixed
+     column was mostly dead space next to a short label like "Tags" before the wrapped badges
+     even started — stack the label above the badges instead, full width. !important is required:
+     the base grid-template-columns is set inline (it depends on isPanel, a per-render JS value,
+     so it can't live in this stylesheet), and inline style always wins over a plain rule. */
+  @media (max-width: 767px) {
+    .org-badge-row {
+      grid-template-columns: 1fr !important;
+      gap: 0.35rem !important;
+    }
+  }
+</style>

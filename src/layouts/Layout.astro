@@ -148,6 +148,11 @@ const navItems = [
         color: var(--fg);
         font-family: var(--sans);
         line-height: 1.55;
+        /* Defense-in-depth against any fixed/min-width element pushing the page wider than the
+           viewport on mobile (the direct cause, a minmax(240px,…) ontology grid with no mobile
+           override, is fixed at its source in OntologyDetail.astro) — this just guarantees a
+           stray future one can't reintroduce page-level horizontal scroll. */
+        overflow-x: hidden;
       }
       a { color: var(--primary); text-decoration: none; }
       a:hover { text-decoration: underline; }
@@ -226,7 +231,11 @@ const navItems = [
            off-screen. */
         width: max-content;
         min-width: 100%;
-        max-width: 320px;
+        /* Clamped to the viewport (minus roughly a page-padding's worth of margin either side) so
+           this can't overflow off the right edge on very narrow phones (~320-360px) — the plain
+           320px cap alone assumed enough room past the trigger button, which isn't always true
+           there. */
+        max-width: min(320px, calc(100vw - 3rem));
         z-index: 30;
         max-height: 280px;
         overflow-y: auto;
@@ -253,6 +262,55 @@ const navItems = [
         background: color-mix(in srgb, var(--primary) 10%, transparent);
         color: var(--primary);
         font-weight: 500;
+      }
+
+      /* Hamburger nav toggle — hidden by default (desktop keeps the plain inline nav-links row);
+         shown only below 768px, where #nav-links itself switches from an inline flex row to a
+         hidden dropdown panel that this button opens/closes (script at the bottom of this file).
+         767px matches MOBILE_BREAKPOINT (768) in src/lib/viewport.ts. */
+      .nav-toggle {
+        display: none;
+        background: none;
+        border: none;
+        font-size: 1.3rem;
+        line-height: 1;
+        color: var(--fg);
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+      }
+      @media (max-width: 767px) {
+        .nav-toggle {
+          display: inline-flex;
+        }
+        /* #nav-links carries its desktop layout (display:flex;gap:1.25rem;flex-wrap:wrap;
+           justify-content:flex-end;align-items:center;…) as an inline style attribute, which
+           beats a plain stylesheet rule regardless of specificity — every property this override
+           shares with that inline style needs !important to actually win below 768px. */
+        #nav-links {
+          display: none !important;
+          position: absolute;
+          top: 48px;
+          left: 0;
+          right: 0;
+          flex-direction: column;
+          flex-wrap: nowrap !important;
+          justify-content: flex-start !important;
+          align-items: flex-start !important;
+          gap: 0.85rem !important;
+          background: color-mix(in srgb, var(--paper-50) 96%, transparent);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid var(--border);
+          padding: 1rem 1.5rem;
+          box-shadow: 0 8px 24px rgba(42, 24, 16, 0.1);
+        }
+        #nav-links.open {
+          display: flex !important;
+        }
+        /* The "·" separators only make sense between items sitting in a row (desktop); stacked
+           vertically in the dropdown they just look like stray marks between links. */
+        .nav-sep {
+          display: none;
+        }
       }
 
       /* Glowing LED map marker — shared by EarthMap.astro and HomeEarthMap.astro (via
@@ -296,11 +354,12 @@ const navItems = [
     <nav style="position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--paper-50) 92%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);">
       <div style="width:100%;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:48px;gap:1rem;">
         <a href={`${base}/`} style="font-weight:500;font-size:0.95rem;color:var(--fg);white-space:nowrap;font-family:var(--sans);">{siteTitle}</a>
-        <div style="display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:flex-end;align-items:center;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">
+        <button type="button" id="nav-toggle" class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">☰</button>
+        <div id="nav-links" style="display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:flex-end;align-items:center;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.03em;">
           {navItems.map((item, i) => (
             <>
               <a href={item.href} class:list={['nav-link', { active: item.match(path) }]}>{item.label}</a>
-              {i < navItems.length - 1 && <span style="color:var(--border);font-size:0.9rem;">·</span>}
+              {i < navItems.length - 1 && <span class="nav-sep" style="color:var(--border);font-size:0.9rem;">·</span>}
             </>
           ))}
         </div>
@@ -328,5 +387,43 @@ const navItems = [
         </div>
       </footer>
     )}
+    <script>
+      // Hamburger nav toggle (mobile only — .nav-toggle/#nav-links.open only do anything below
+      // 767px, see the CSS above). Same open/close pattern (toggle on click, close on outside
+      // click / Escape / picking an option) already used for the Category/Tags popovers in
+      // OrganizationsGallery.astro, duplicated here rather than shared since it's only a few lines
+      // and this file has no other script to extend.
+      const navToggle = document.getElementById('nav-toggle');
+      const navLinks = document.getElementById('nav-links');
+
+      function closeNav() {
+        navLinks?.classList.remove('open');
+        navToggle?.setAttribute('aria-expanded', 'false');
+      }
+
+      navToggle?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = navLinks?.classList.toggle('open');
+        navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      // Closing on a nav-link click matters even though it navigates away — without it, the menu
+      // would still be open (visible) for an instant during the page transition, and stays open on
+      // a same-page click (e.g. the already-active link).
+      navLinks?.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement)?.closest('a')) closeNav();
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!navLinks?.classList.contains('open')) return;
+        const target = e.target as Node;
+        if (navLinks.contains(target) || navToggle?.contains(target)) return;
+        closeNav();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeNav();
+      });
+    </script>
   </body>
 </html>

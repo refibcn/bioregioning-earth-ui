@@ -186,6 +186,30 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
     }
   }
 
+  /* Mobile-only override, layered on top of the ladder above rather than replacing it — desktop/
+     tablet (≥768px) keeps the fixed-column behavior and its trailing gap on short rows exactly as
+     before. 767px matches MOBILE_BREAKPOINT (768) in src/lib/viewport.ts.
+     Switches from CSS Grid to a wrapping flexbox, not grid's own repeat(auto-fit, minmax(…)) —
+     tried that first, but it doesn't actually solve this: auto-fit picks ONE column count for the
+     whole grid based on container width, shared by every wrapped line, so a 3-item row on a
+     screen wide enough for only 2 auto-fit columns still wraps its 3rd card onto its own line at
+     just ONE column's width, not the full row (confirmed via getComputedStyle+getBoundingClientRect
+     in Chrome — the leftover card sat left-aligned, not stretched). flex-wrap doesn't have that
+     problem: flex-grow redistributes each wrapped line's free space independently, so a lone
+     leftover card on its own line takes the *entire* line's width, whatever that line's width is.
+     display:flex needs !important — grid-template-columns of a sibling ontology-theme-row is set
+     inline (display:grid), and while `display` on the row itself isn't fought over by a competing
+     value here, keeping !important is defensive since this same class's base rule is grid. */
+  @media (max-width: 767px) {
+    .ontology-theme-row {
+      display: flex !important;
+      flex-wrap: wrap;
+    }
+    .ontology-theme-row > .ontology-parent-card {
+      flex: 1 1 240px;
+    }
+  }
+
   /* Same CSS-only hover as .gallery-card (OrganizationsGallery.astro) — a lift + shadow, not an
      onmouseenter/onmouseleave inline-style toggle, so it can't get stuck on an interrupted
      mouseleave (fast pointer movement, touch, re-hydration). */
@@ -199,6 +223,12 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
 <script define:vars={{ hasLookups }}>
   (function () {
     if (!hasLookups) return;
+
+    // define:vars scripts are inline (not bundled by Vite) so they can't `import` — src/lib/viewport.ts's
+    // isMobileViewport is duplicated here instead; keep the 768 threshold in sync with that file.
+    function isMobileViewport() {
+      return window.innerWidth < 768;
+    }
 
     const panel = document.getElementById('ontology-side-panel');
     const panelContent = document.getElementById('ontology-side-panel-content');
@@ -222,7 +252,15 @@ function resolveSources(record: NormalizedRecord): NormalizedRecord[] {
     document.querySelectorAll('.ontology-parent-card').forEach((card) => {
       card.addEventListener('click', () => {
         const id = card.getAttribute('data-id');
-        if (id) openPanel(id);
+        if (!id) return;
+        // Mobile: no sidebar at all (DetailPanel.astro forces it hidden via CSS regardless) — go
+        // straight to the theme's own page instead, same data-full-href every card already carries.
+        if (isMobileViewport()) {
+          const href = card.getAttribute('data-full-href');
+          if (href) window.location.href = href;
+          return;
+        }
+        openPanel(id);
       });
     });
   })();
