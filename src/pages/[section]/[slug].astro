@@ -130,7 +130,7 @@ const description = (record.properties['Description']?.toString() ?? record.prop
 
     <!-- G4: no border around the card in full-page mode (was reading as "a line around the
          title" — it actually wrapped the whole block) — kept as a plain padded block instead. -->
-    <div style="border-radius:var(--radius);background:var(--card);padding:1.5rem;margin-bottom:1.5rem;">
+    <div class="detail-page-card" style="border-radius:var(--radius);background:var(--card);padding:1.5rem;margin-bottom:1.5rem;">
       {isOrgs ? (
         <OrgDetail record={record} lookups={lookups} mode="page" />
       ) : isOntology ? (
@@ -163,3 +163,21 @@ const description = (record.properties['Description']?.toString() ?? record.prop
     </div>
   </main>
 </Layout>
+
+<style>
+  /* <main> above already provides 1.5rem of horizontal inset — the same padding every other page
+     uses on its own <main> (e.g. the listing pages in [section]/index.astro). This card's own
+     1.5rem on top of that doubled the horizontal padding to 3rem total on mobile, which read as
+     noticeably more cramped/padded than every other page. Drop the card's own horizontal padding
+     below 768px so the total inset matches everywhere else exactly; vertical padding is untouched
+     (not part of the complaint, and doesn't compound the same way — there's no "every other page"
+     vertical baseline to match it against). !important is required: the base padding is set
+     inline (padding:1.5rem, all four sides), which beats a plain stylesheet rule regardless of
+     specificity. 767px matches MOBILE_BREAKPOINT (768) in src/lib/viewport.ts. */
+  @media (max-width: 767px) {
+    .detail-page-card {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+  }
+</style>
