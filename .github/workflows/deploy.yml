@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Rebuild daily to pick up Notion edits (no push required). Off-the-hour
+    # to avoid GitHub Actions' peak-minute scheduling delays.
+    - cron: "17 3 * * *"
 
 permissions:
   contents: read
